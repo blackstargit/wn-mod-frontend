@@ -1,11 +1,16 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useMemo } from "react";
 import { libraryApi, novelApi } from "../api/client";
 import type { Novel } from "../types";
-import { Link } from "react-router-dom";
+import NovelCard from "./NovelCard";
+import {
+  enrichNovelWithMetadata,
+  markNovelAsScraped,
+} from "../utils/novelMetadata";
 
 const NovelList: React.FC = () => {
   const [novels, setNovels] = useState<Novel[]>([]);
   const [scraping, setScraping] = useState<number | null>(null);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     loadNovels();
@@ -13,10 +18,14 @@ const NovelList: React.FC = () => {
 
   const loadNovels = async () => {
     try {
+      setLoading(true);
       const response = await libraryApi.getNovels();
-      setNovels(response.data);
+      const enrichedNovels = response.data.map(enrichNovelWithMetadata);
+      setNovels(enrichedNovels);
     } catch (error) {
       console.error(error);
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -24,66 +33,90 @@ const NovelList: React.FC = () => {
     setScraping(id);
     try {
       await novelApi.scrapeNovel(id);
-      alert("Scraping started (check backend console)");
+      markNovelAsScraped(id);
+      // Refresh the novel list to update metadata
+      await loadNovels();
+      console.log("Scraping started (check backend console)");
     } catch (error) {
       console.error(error);
-      alert("Failed to start scrape");
     } finally {
       setScraping(null);
     }
   };
 
-  return (
-    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-      {novels.map((novel) => (
-        <div
-          key={novel.id}
-          className="border rounded-lg overflow-hidden shadow-sm hover:shadow-md transition-shadow"
-        >
-          <div className="flex h-48">
-            <img
-              src={novel.cover_url}
-              alt={novel.title}
-              className="w-32 object-cover"
-              onError={(e) => {
-                (e.target as HTMLImageElement).src =
-                  "https://via.placeholder.com/150?text=No+Cover";
-              }}
-            />
-            <div className="p-4 flex flex-col justify-between flex-1">
-              <div>
-                <h3 className="font-bold text-lg line-clamp-2">
-                  {novel.title}
-                </h3>
-                <p className="text-sm text-gray-500">{novel.author}</p>
-                <a
-                  href={novel.webnovel_id}
-                  target="_blank"
-                  rel="noreferrer"
-                  className="text-xs text-blue-500 hover:underline mt-1 block"
-                >
-                  Original Source
-                </a>
-              </div>
-              <div className="flex justify-end gap-2">
-                <button
-                  onClick={() => handleScrape(novel.id)}
-                  disabled={scraping === novel.id}
-                  className="px-3 py-1 bg-yellow-500 text-white text-sm rounded hover:bg-yellow-600 disabled:opacity-50"
-                >
-                  {scraping === novel.id ? "Starting..." : "Scrape"}
-                </button>
-                <Link
-                  to={`/read/${novel.id}`}
-                  className="px-3 py-1 bg-green-600 text-white text-sm rounded hover:bg-green-700 flex items-center"
-                >
-                  Read
-                </Link>
-              </div>
-            </div>
-          </div>
+  // Sort novels: last accessed first, then by added date
+  const sortedNovels = useMemo(() => {
+    return [...novels].sort((a, b) => {
+      // If both have lastAccessedAt, sort by that (most recent first)
+      if (a.lastAccessedAt && b.lastAccessedAt) {
+        return (
+          new Date(b.lastAccessedAt).getTime() -
+          new Date(a.lastAccessedAt).getTime()
+        );
+      }
+      // If only one has been accessed, it goes first
+      if (a.lastAccessedAt) return -1;
+      if (b.lastAccessedAt) return 1;
+
+      // Otherwise sort by added date (most recent first)
+      const aDate = a.addedAt ? new Date(a.addedAt).getTime() : 0;
+      const bDate = b.addedAt ? new Date(b.addedAt).getTime() : 0;
+      return bDate - aDate;
+    });
+  }, [novels]);
+
+  if (loading) {
+    return (
+      <div className="flex justify-center items-center py-20">
+        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-purple-500"></div>
+      </div>
+    );
+  }
+
+  if (novels.length === 0) {
+    return (
+      <div className="text-center py-20">
+        <div className="text-slate-400 text-lg">
+          <p className="mb-2">📚 No novels in your library yet</p>
+          <p className="text-sm">Import your library above to get started</p>
         </div>
-      ))}
+      </div>
+    );
+  }
+
+  return (
+    <div className="space-y-4">
+      {/* Stats */}
+      <div className="flex gap-4 text-sm">
+        <div className="px-3 py-1.5 rounded-lg bg-slate-800/50 border border-slate-700/50 text-slate-300">
+          <span className="text-slate-400">Total:</span>{" "}
+          <span className="font-semibold text-white">{novels.length}</span>
+        </div>
+        <div className="px-3 py-1.5 rounded-lg bg-green-500/10 border border-green-500/30 text-green-400">
+          <span className="text-green-500">Scraped:</span>{" "}
+          <span className="font-semibold">
+            {novels.filter((n) => n.scraped).length}
+          </span>
+        </div>
+        <div className="px-3 py-1.5 rounded-lg bg-blue-500/10 border border-blue-500/30 text-blue-400">
+          <span className="text-blue-500">Reading:</span>{" "}
+          <span className="font-semibold">
+            {novels.filter((n) => n.read).length}
+          </span>
+        </div>
+      </div>
+
+      {/* Grid */}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+        {sortedNovels.map((novel) => (
+          <NovelCard
+            key={novel.uuid || novel.id}
+            novel={novel}
+            onScrape={handleScrape}
+            isScraping={scraping === novel.id}
+          />
+        ))}
+      </div>
     </div>
   );
 };
