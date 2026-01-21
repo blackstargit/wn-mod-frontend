@@ -16,11 +16,13 @@ export const libraryApi = {
 
 // Novel API
 export const novelApi = {
-  getNovel: (id: number) => apiClient.get(`/novels/${id}`),
-  getChapters: (id: number) => apiClient.get(`/novels/${id}/chapters`),
-  scrapeNovel: (id: number) => apiClient.post(`/scraper/${id}/scrape`),
+  getNovel: (book_id: string) => apiClient.get(`/novels/${book_id}`),
+  getChapters: (book_id: string) =>
+    apiClient.get(`/novels/${book_id}/chapters`),
+  scrapeNovel: (book_id: string) =>
+    apiClient.post(`/scraper/${book_id}/scrape`),
   updateMetadata: (
-    id: number,
+    book_id: string,
     metadata: { last_read_chapter?: number; last_accessed_at?: string },
-  ) => apiClient.patch(`/novels/${id}/metadata`, metadata),
+  ) => apiClient.patch(`/novels/${book_id}/metadata`, metadata),
 };

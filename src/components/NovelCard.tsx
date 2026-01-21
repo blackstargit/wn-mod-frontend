@@ -5,7 +5,7 @@ import { novelApi } from "../api/client";
 
 interface NovelCardProps {
   novel: Novel;
-  onScrape: (id: number) => void;
+  onScrape: (book_id: string) => void;
   isScraping: boolean;
 }
 
@@ -52,7 +52,7 @@ const NovelCard: React.FC<NovelCardProps> = ({
 
   const handleReadClick = async () => {
     try {
-      await novelApi.updateMetadata(novel.id, {
+      await novelApi.updateMetadata(novel.book_id, {
         last_accessed_at: new Date().toISOString(),
       });
     } catch (error) {
@@ -96,7 +96,7 @@ const NovelCard: React.FC<NovelCardProps> = ({
         {/* Actions - Equal Width Buttons */}
         <div className="flex gap-3">
           <button
-            onClick={() => onScrape(novel.id)}
+            onClick={() => onScrape(novel.book_id)}
             disabled={isScraping || novel.scraped}
             className="flex-1 px-4 py-2.5 text-sm font-semibold rounded-xl bg-gradient-to-r from-orange-500 to-orange-600 text-white hover:from-orange-600 hover:to-orange-700 disabled:from-slate-700 disabled:to-slate-700 disabled:text-slate-500 disabled:cursor-not-allowed transition-all duration-200 shadow-lg shadow-orange-500/20 hover:shadow-orange-500/40"
           >
@@ -107,7 +107,7 @@ const NovelCard: React.FC<NovelCardProps> = ({
                 : "Scrape"}
           </button>
           <Link
-            to={`/read/${novel.id}`}
+            to={`/read/${novel.book_id}`}
             onClick={handleReadClick}
             className="flex-1 px-4 py-2.5 text-sm font-semibold rounded-xl bg-gradient-to-r from-purple-500 to-purple-600 text-white hover:from-purple-600 hover:to-purple-700 transition-all duration-200 text-center shadow-lg shadow-purple-500/20 hover:shadow-purple-500/40"
           >

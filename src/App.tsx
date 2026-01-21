@@ -30,14 +30,9 @@ function App() {
         <main className="max-w-7xl mx-auto py-8 px-4 sm:px-6 lg:px-8">
           <Routes>
             <Route path="/" element={<HomePage />} />
-            <Route path="/read/:id" element={<Reader />} />
+            <Route path="/read/:book_id" element={<Reader />} />
           </Routes>
         </main>
-
-        {/* Footer */}
-        <footer className="mt-auto py-6 text-center text-slate-500 text-sm border-t border-slate-800/50">
-          <p>Built with React, FastAPI & Playwright</p>
-        </footer>
       </div>
     </Router>
   );

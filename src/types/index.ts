@@ -1,10 +1,8 @@
 export interface Novel {
-  id: number;
-  uuid: string;
+  book_id: string; // Primary key (webnovel_id)
   title: string;
   author: string;
   cover_url: string;
-  webnovel_id: string;
   webnovel_url?: string;
   total_chapters: number;
   scraped: boolean;
@@ -16,7 +14,7 @@ export interface Novel {
 
 export interface Chapter {
   id: number;
-  novel_id: number;
+  book_id: string; // Foreign key to Novel
   chapter_index: number;
   title: string;
   content: string;

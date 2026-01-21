@@ -4,80 +4,110 @@ import { novelApi } from "../api/client";
 import type { Chapter } from "../types";
 
 const Reader: React.FC = () => {
-  const { id } = useParams<{ id: string }>();
+  const { book_id } = useParams<{ book_id: string }>();
   const [chapters, setChapters] = useState<Chapter[]>([]);
   const [currentChapterIndex, setCurrentChapterIndex] = useState(0);
-  const [isPlaying, setIsPlaying] = useState(false);
-
-  const synth = window.speechSynthesis;
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    if (id) loadChapters(parseInt(id));
-    return () => {
-      synth.cancel();
-    };
-  }, [id]);
+    if (book_id) {
+      loadChapters();
+    }
+  }, [book_id]);
 
-  const loadChapters = async (novelId: number) => {
+  const loadChapters = async () => {
     try {
-      const response = await novelApi.getChapters(novelId);
+      setLoading(true);
+      const response = await novelApi.getChapters(book_id!);
       setChapters(response.data);
     } catch (error) {
       console.error(error);
-    }
-  };
-
-  const handleTTS = () => {
-    if (isPlaying) {
-      synth.cancel();
-      setIsPlaying(false);
-    } else {
-      const chapter = chapters[currentChapterIndex];
-      if (!chapter) return;
-
-      const utterance = new SpeechSynthesisUtterance(chapter.content);
-      utterance.onend = () => setIsPlaying(false);
-      synth.speak(utterance);
-      setIsPlaying(true);
+    } finally {
+      setLoading(false);
     }
   };
 
   const currentChapter = chapters[currentChapterIndex];
 
-  if (!currentChapter) return <div>Loading or No Chapters...</div>;
+  const handlePrevious = () => {
+    if (currentChapterIndex > 0) {
+      setCurrentChapterIndex(currentChapterIndex - 1);
+      window.scrollTo(0, 0);
+    }
+  };
+
+  const handleNext = () => {
+    if (currentChapterIndex < chapters.length - 1) {
+      setCurrentChapterIndex(currentChapterIndex + 1);
+      window.scrollTo(0, 0);
+    }
+  };
+
+  const handleTTS = () => {
+    if (currentChapter) {
+      const utterance = new SpeechSynthesisUtterance(currentChapter.content);
+      window.speechSynthesis.speak(utterance);
+    }
+  };
+
+  if (loading) {
+    return (
+      <div className="flex justify-center items-center py-20">
+        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-purple-500"></div>
+      </div>
+    );
+  }
+
+  if (!currentChapter) {
+    return (
+      <div className="text-center py-20">
+        <p className="text-slate-400">
+          No chapters available. Please scrape the novel first.
+        </p>
+      </div>
+    );
+  }
 
   return (
-    <div className="max-w-3xl mx-auto p-6 bg-white min-h-screen">
-      <div className="flex justify-between items-center mb-6 sticky top-0 bg-white py-4 border-b">
-        <button
-          disabled={currentChapterIndex <= 0}
-          onClick={() => setCurrentChapterIndex((p) => p - 1)}
-          className="px-4 py-2 bg-gray-200 rounded disabled:opacity-50"
-        >
-          Prev
-        </button>
-        <h1 className="text-xl font-bold truncate max-w-md">
+    <div className="max-w-4xl mx-auto p-6">
+      <div className="bg-gradient-to-br from-slate-800 to-slate-900 rounded-2xl p-8 shadow-xl border border-slate-700/50">
+        <h1 className="text-3xl font-bold mb-2 text-white">
           {currentChapter.title}
         </h1>
-        <div className="flex gap-2">
+        <p className="text-slate-400 mb-6">
+          Chapter {currentChapterIndex + 1} of {chapters.length}
+        </p>
+
+        <div className="prose prose-invert max-w-none mb-8">
+          <div className="whitespace-pre-wrap text-slate-200 leading-relaxed">
+            {currentChapter.content}
+          </div>
+        </div>
+
+        <div className="flex gap-4 justify-between items-center border-t border-slate-700 pt-6">
+          <button
+            onClick={handlePrevious}
+            disabled={currentChapterIndex === 0}
+            className="px-6 py-3 bg-gradient-to-r from-purple-500 to-purple-600 text-white rounded-xl hover:from-purple-600 hover:to-purple-700 disabled:from-slate-700 disabled:to-slate-700 disabled:text-slate-500 disabled:cursor-not-allowed transition-all font-semibold shadow-lg"
+          >
+            ← Previous
+          </button>
+
           <button
             onClick={handleTTS}
-            className={`px-4 py-2 text-white rounded ${isPlaying ? "bg-red-500" : "bg-blue-500"}`}
+            className="px-6 py-3 bg-gradient-to-r from-blue-500 to-blue-600 text-white rounded-xl hover:from-blue-600 hover:to-blue-700 transition-all font-semibold shadow-lg"
           >
-            {isPlaying ? "Stop TTS" : "Play TTS"}
+            🔊 Text-to-Speech
           </button>
+
           <button
-            disabled={currentChapterIndex >= chapters.length - 1}
-            onClick={() => setCurrentChapterIndex((p) => p + 1)}
-            className="px-4 py-2 bg-gray-200 rounded disabled:opacity-50"
+            onClick={handleNext}
+            disabled={currentChapterIndex === chapters.length - 1}
+            className="px-6 py-3 bg-gradient-to-r from-purple-500 to-purple-600 text-white rounded-xl hover:from-purple-600 hover:to-purple-700 disabled:from-slate-700 disabled:to-slate-700 disabled:text-slate-500 disabled:cursor-not-allowed transition-all font-semibold shadow-lg"
           >
-            Next
+            Next →
           </button>
         </div>
-      </div>
-
-      <div className="prose lg:prose-xl mx-auto whitespace-pre-wrap font-serif leading-loose">
-        {currentChapter.content}
       </div>
     </div>
   );

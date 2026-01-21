@@ -5,7 +5,7 @@ import NovelCard from "./NovelCard";
 
 const NovelList: React.FC = () => {
   const [novels, setNovels] = useState<Novel[]>([]);
-  const [scraping, setScraping] = useState<number | null>(null);
+  const [scraping, setScraping] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -24,10 +24,10 @@ const NovelList: React.FC = () => {
     }
   };
 
-  const handleScrape = async (id: number) => {
-    setScraping(id);
+  const handleScrape = async (book_id: string) => {
+    setScraping(book_id);
     try {
-      await novelApi.scrapeNovel(id);
+      await novelApi.scrapeNovel(book_id);
       // Refresh the novel list after a delay to show updated status
       setTimeout(() => {
         loadNovels();
@@ -88,10 +88,10 @@ const NovelList: React.FC = () => {
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
         {sortedNovels.map((novel) => (
           <NovelCard
-            key={novel.uuid}
+            key={novel.book_id}
             novel={novel}
             onScrape={handleScrape}
-            isScraping={scraping === novel.id}
+            isScraping={scraping === novel.book_id}
           />
         ))}
       </div>
