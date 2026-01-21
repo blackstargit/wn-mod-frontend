@@ -1,7 +1,7 @@
 import React from "react";
 import type { Novel } from "../types";
 import { Link } from "react-router-dom";
-import { markNovelAsAccessed } from "../utils/novelMetadata";
+import { novelApi } from "../api/client";
 
 interface NovelCardProps {
   novel: Novel;
@@ -22,7 +22,7 @@ const NovelCard: React.FC<NovelCardProps> = ({
         </span>
       );
     }
-    if (novel.read) {
+    if (novel.last_accessed_at) {
       return (
         <span className="px-2.5 py-1 text-xs font-semibold rounded-full bg-blue-500/20 text-blue-400 border border-blue-500/30">
           Reading
@@ -50,12 +50,21 @@ const NovelCard: React.FC<NovelCardProps> = ({
     return date.toLocaleDateString();
   };
 
-  const handleReadClick = () => {
-    markNovelAsAccessed(novel.id);
+  const handleReadClick = async () => {
+    try {
+      await novelApi.updateMetadata(novel.id, {
+        last_accessed_at: new Date().toISOString(),
+      });
+    } catch (error) {
+      console.error("Failed to update metadata:", error);
+    }
   };
 
   return (
-    <div title={novel.title}  className="group relative bg-gradient-to-br from-slate-800 to-slate-900 rounded-2xl overflow-hidden shadow-xl hover:shadow-2xl hover:shadow-purple-500/20 transition-all duration-300 border border-slate-700/50 hover:border-purple-500/50 h-full">
+    <div
+      title={novel.title}
+      className="group relative bg-gradient-to-br from-slate-800 to-slate-900 rounded-2xl overflow-hidden shadow-xl hover:shadow-2xl hover:shadow-purple-500/20 transition-all duration-300 border border-slate-700/50 hover:border-purple-500/50 h-full"
+    >
       {/* Status Badge - Top Right */}
       <div className="absolute top-4 right-4 z-10">{getStatusBadge()}</div>
 
@@ -74,11 +83,11 @@ const NovelCard: React.FC<NovelCardProps> = ({
               </p>
             )}
             <p className="text-sm text-slate-600">
-              ➕ Added {formatDate(novel.addedAt)}
+              ➕ Added {formatDate(novel.created_at)}
             </p>
-            {novel.lastAccessedAt && novel.read && (
+            {novel.last_accessed_at && (
               <p className="text-sm text-blue-400 font-medium">
-                📖 Last read {formatDate(novel.lastAccessedAt)}
+                📖 Last read {formatDate(novel.last_accessed_at)}
               </p>
             )}
           </div>

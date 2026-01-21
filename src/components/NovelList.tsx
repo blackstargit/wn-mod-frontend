@@ -2,10 +2,6 @@ import React, { useEffect, useState, useMemo } from "react";
 import { libraryApi, novelApi } from "../api/client";
 import type { Novel } from "../types";
 import NovelCard from "./NovelCard";
-import {
-  enrichNovelWithMetadata,
-  markNovelAsScraped,
-} from "../utils/novelMetadata";
 
 const NovelList: React.FC = () => {
   const [novels, setNovels] = useState<Novel[]>([]);
@@ -20,8 +16,7 @@ const NovelList: React.FC = () => {
     try {
       setLoading(true);
       const response = await libraryApi.getNovels();
-      const enrichedNovels = response.data.map(enrichNovelWithMetadata);
-      setNovels(enrichedNovels);
+      setNovels(response.data);
     } catch (error) {
       console.error(error);
     } finally {
@@ -33,9 +28,10 @@ const NovelList: React.FC = () => {
     setScraping(id);
     try {
       await novelApi.scrapeNovel(id);
-      markNovelAsScraped(id);
-      // Refresh the novel list to update metadata
-      await loadNovels();
+      // Refresh the novel list after a delay to show updated status
+      setTimeout(() => {
+        loadNovels();
+      }, 2000);
       console.log("Scraping started (check backend console)");
     } catch (error) {
       console.error(error);
@@ -44,26 +40,8 @@ const NovelList: React.FC = () => {
     }
   };
 
-  // Sort novels: last accessed first, then by added date
-  const sortedNovels = useMemo(() => {
-    return [...novels].sort((a, b) => {
-      // If both have lastAccessedAt, sort by that (most recent first)
-      if (a.lastAccessedAt && b.lastAccessedAt) {
-        return (
-          new Date(b.lastAccessedAt).getTime() -
-          new Date(a.lastAccessedAt).getTime()
-        );
-      }
-      // If only one has been accessed, it goes first
-      if (a.lastAccessedAt) return -1;
-      if (b.lastAccessedAt) return 1;
-
-      // Otherwise sort by added date (most recent first)
-      const aDate = a.addedAt ? new Date(a.addedAt).getTime() : 0;
-      const bDate = b.addedAt ? new Date(b.addedAt).getTime() : 0;
-      return bDate - aDate;
-    });
-  }, [novels]);
+  // Backend now returns novels sorted by last_accessed_at, so no need to sort here
+  const sortedNovels = useMemo(() => novels, [novels]);
 
   if (loading) {
     return (
@@ -101,7 +79,7 @@ const NovelList: React.FC = () => {
         <div className="px-3 py-1.5 rounded-lg bg-blue-500/10 border border-blue-500/30 text-blue-400">
           <span className="text-blue-500">Reading:</span>{" "}
           <span className="font-semibold">
-            {novels.filter((n) => n.read).length}
+            {novels.filter((n) => n.last_accessed_at).length}
           </span>
         </div>
       </div>
@@ -110,7 +88,7 @@ const NovelList: React.FC = () => {
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
         {sortedNovels.map((novel) => (
           <NovelCard
-            key={novel.uuid || novel.id}
+            key={novel.uuid}
             novel={novel}
             onScrape={handleScrape}
             isScraping={scraping === novel.id}
