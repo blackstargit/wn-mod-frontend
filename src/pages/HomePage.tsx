@@ -10,7 +10,18 @@ const HomePage: React.FC = () => {
   const [novels, setNovels] = useState<Novel[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
   const [selectedCategory, setSelectedCategory] = useState<number | null>(null);
-  const [sortBy, setSortBy] = useState<SortOption>("recently-read");
+
+  // Initialize sort preferences from localStorage
+  const [sortBy, setSortBy] = useState<SortOption>(() => {
+    const saved = localStorage.getItem("novelSortBy");
+    return (saved as SortOption) || "recently-read";
+  });
+
+  const [sortOrder, setSortOrder] = useState<"asc" | "desc">(() => {
+    const saved = localStorage.getItem("novelSortOrder");
+    return (saved as "asc" | "desc") || "desc";
+  });
+
   const [scraping, setScraping] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [selectedNovels, setSelectedNovels] = useState<Set<string>>(new Set());
@@ -19,6 +30,15 @@ const HomePage: React.FC = () => {
   useEffect(() => {
     loadData();
   }, []);
+
+  // Persist sort preferences to localStorage
+  useEffect(() => {
+    localStorage.setItem("novelSortBy", sortBy);
+  }, [sortBy]);
+
+  useEffect(() => {
+    localStorage.setItem("novelSortOrder", sortOrder);
+  }, [sortOrder]);
 
   const loadData = async () => {
     try {
@@ -103,6 +123,10 @@ const HomePage: React.FC = () => {
     }
   };
 
+  const toggleSortOrder = () => {
+    setSortOrder((prev) => (prev === "asc" ? "desc" : "asc"));
+  };
+
   // Filter novels by selected category
   const filteredNovels = useMemo(() => {
     if (selectedCategory === null) {
@@ -111,9 +135,10 @@ const HomePage: React.FC = () => {
     return novels.filter((n) => n.category_id === selectedCategory);
   }, [novels, selectedCategory]);
 
-  // Sort novels based on selected option
+  // Sort novels based on selected option and order
   const sortedNovels = useMemo(() => {
     const novelsCopy = [...filteredNovels];
+    const multiplier = sortOrder === "asc" ? 1 : -1;
 
     switch (sortBy) {
       case "recently-read":
@@ -124,24 +149,29 @@ const HomePage: React.FC = () => {
           const bTime = b.last_accessed_at
             ? new Date(b.last_accessed_at).getTime()
             : 0;
-          if (bTime !== aTime) return bTime - aTime;
+          if (bTime !== aTime) return (bTime - aTime) * multiplier;
           return (
-            new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
+            (new Date(b.created_at).getTime() -
+              new Date(a.created_at).getTime()) *
+            multiplier
           );
         });
 
       case "date-added":
         return novelsCopy.sort(
           (a, b) =>
-            new Date(b.created_at).getTime() - new Date(a.created_at).getTime(),
+            (new Date(b.created_at).getTime() -
+              new Date(a.created_at).getTime()) *
+            multiplier,
         );
 
       case "by-category":
         return novelsCopy.sort((a, b) => {
           // First sort by category_id
-          if (a.category_id !== b.category_id) {
-            return (a.category_id || 0) - (b.category_id || 0);
-          }
+          const categoryDiff =
+            ((a.category_id || 0) - (b.category_id || 0)) * multiplier;
+          if (categoryDiff !== 0) return categoryDiff;
+
           // Within same category, sort by recently read
           const aTime = a.last_accessed_at
             ? new Date(a.last_accessed_at).getTime()
@@ -149,13 +179,13 @@ const HomePage: React.FC = () => {
           const bTime = b.last_accessed_at
             ? new Date(b.last_accessed_at).getTime()
             : 0;
-          return bTime - aTime;
+          return (bTime - aTime) * multiplier;
         });
 
       default:
         return novelsCopy;
     }
-  }, [filteredNovels, sortBy]);
+  }, [filteredNovels, sortBy, sortOrder]);
 
   // Calculate stats
   const stats = useMemo(() => {
@@ -254,6 +284,14 @@ const HomePage: React.FC = () => {
             <option value="date-added">Date Added</option>
             <option value="by-category">By Category</option>
           </select>
+
+          <button
+            onClick={toggleSortOrder}
+            className="px-4 py-2 bg-slate-700 text-white rounded-lg border border-slate-600 hover:bg-slate-600 transition-colors font-medium flex items-center gap-2"
+            title={`Sort order: ${sortOrder === "desc" ? "Descending" : "Ascending"}`}
+          >
+            {sortOrder === "desc" ? "↓ Desc" : "↑ Asc"}
+          </button>
         </div>
 
         <div className="flex items-center gap-3">
