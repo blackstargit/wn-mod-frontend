@@ -178,7 +178,7 @@ const CategoriesPage: React.FC = () => {
 
             <div className="flex justify-between items-center text-sm">
               <span className="text-slate-400">{category.count} novels</span>
-              {category.id !== 1 && editingId !== category.id && (
+              {editingId !== category.id && (
                 <div className="flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
                   <button
                     onClick={() => startEditing(category)}
