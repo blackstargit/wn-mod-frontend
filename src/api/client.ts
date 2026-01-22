@@ -23,6 +23,18 @@ export const novelApi = {
     apiClient.post(`/scraper/${book_id}/scrape`),
   updateMetadata: (
     book_id: string,
-    metadata: { last_read_chapter?: number; last_accessed_at?: string },
+    metadata: {
+      last_read_chapter?: number;
+      last_accessed_at?: string;
+      category_id?: string;
+    },
   ) => apiClient.patch(`/novels/${book_id}/metadata`, metadata),
+};
+
+// Categories API
+export const categoriesApi = {
+  getCategories: () => apiClient.get("/categories"),
+  createCategory: (name: string) => apiClient.post("/categories", { name }),
+  deleteCategory: (category_id: string) =>
+    apiClient.delete(`/categories/${category_id}`),
 };

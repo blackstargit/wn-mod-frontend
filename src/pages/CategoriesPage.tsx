@@ -1,30 +1,67 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
+import { categoriesApi } from "../api/client";
+import type { Category } from "../types";
 
 const CategoriesPage: React.FC = () => {
   const [newCategory, setNewCategory] = useState("");
-  // Mock data for now - will be replaced with backend data later
-  const [categories, setCategories] = useState([
-    { id: "unread", name: "Unread", count: 12, isSystem: true },
-    { id: "reading", name: "Reading", count: 3, isSystem: true },
-    { id: "scraped", name: "Scraped", count: 5, isSystem: true },
-    { id: "finished", name: "Finished", count: 0, isSystem: false },
-  ]);
+  const [categories, setCategories] = useState<Category[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
 
-  const handleAddCategory = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (newCategory.trim()) {
-      setCategories([
-        ...categories,
-        {
-          id: newCategory.toLowerCase().replace(/\s+/g, "-"),
-          name: newCategory,
-          count: 0,
-          isSystem: false,
-        },
-      ]);
-      setNewCategory("");
+  const loadCategories = async () => {
+    try {
+      setLoading(true);
+      const response = await categoriesApi.getCategories();
+      setCategories(response.data);
+    } catch (err) {
+      console.error("Failed to load categories", err);
+      setError("Failed to load categories");
+    } finally {
+      setLoading(false);
     }
   };
+
+  useEffect(() => {
+    loadCategories();
+  }, []);
+
+  const handleAddCategory = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (newCategory.trim()) {
+      try {
+        await categoriesApi.createCategory(newCategory);
+        setNewCategory("");
+        loadCategories(); // Reload to get updated list/counts
+      } catch (err) {
+        console.error("Failed to create category", err);
+        setError("Failed to create category");
+      }
+    }
+  };
+
+  const handleDeleteCategory = async (categoryId: string) => {
+    if (
+      window.confirm(
+        "Are you sure? Novels in this category will be moved to 'Imported'.",
+      )
+    ) {
+      try {
+        await categoriesApi.deleteCategory(categoryId);
+        loadCategories();
+      } catch (err) {
+        console.error("Failed to delete category", err);
+        setError("Failed to delete category");
+      }
+    }
+  };
+
+  if (loading && categories.length === 0) {
+    return (
+      <div className="flex justify-center items-center py-20">
+        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-500"></div>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-8">
@@ -37,6 +74,12 @@ const CategoriesPage: React.FC = () => {
           Organize your library with custom categories
         </p>
       </div>
+
+      {error && (
+        <div className="bg-red-500/10 border border-red-500/30 text-red-400 px-4 py-3 rounded-lg">
+          {error}
+        </div>
+      )}
 
       {/* Add New Category */}
       <div className="bg-slate-800/50 rounded-xl p-6 border border-slate-700/50">
@@ -69,7 +112,7 @@ const CategoriesPage: React.FC = () => {
               <h3 className="font-bold text-lg text-white group-hover:text-blue-300 transition-colors">
                 {category.name}
               </h3>
-              {category.isSystem && (
+              {category.is_system && (
                 <span className="text-[10px] uppercase font-bold tracking-wider text-slate-500 bg-slate-900 px-2 py-1 rounded">
                   System
                 </span>
@@ -77,8 +120,11 @@ const CategoriesPage: React.FC = () => {
             </div>
             <div className="flex justify-between items-center text-sm">
               <span className="text-slate-400">{category.count} novels</span>
-              {!category.isSystem && (
-                <button className="text-red-400 hover:text-red-300 text-xs font-medium opacity-0 group-hover:opacity-100 transition-opacity">
+              {!category.is_system && (
+                <button
+                  onClick={() => handleDeleteCategory(category.id)}
+                  className="text-red-400 hover:text-red-300 text-xs font-medium opacity-0 group-hover:opacity-100 transition-opacity px-2 py-1 hover:bg-slate-700 rounded"
+                >
                   Delete
                 </button>
               )}

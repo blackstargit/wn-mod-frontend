@@ -4,6 +4,7 @@ export interface Novel {
   author: string;
   cover_url: string;
   webnovel_url?: string;
+  category_id?: string;
   total_chapters: number;
   scraped: boolean;
   last_read_chapter: number;
@@ -18,6 +19,13 @@ export interface Chapter {
   chapter_index: number;
   title: string;
   content: string;
+}
+
+export interface Category {
+  id: string;
+  name: string;
+  is_system: boolean;
+  count: number;
 }
 
 export type NovelStatus = "unread" | "reading" | "scraped";
