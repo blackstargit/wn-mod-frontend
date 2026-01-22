@@ -17,7 +17,7 @@ const NovelCard: React.FC<NovelCardProps> = ({
   const [isEditingCategory, setIsEditingCategory] = useState(false);
   const [categories, setCategories] = useState<Category[]>([]);
   const [currentCategoryId, setCurrentCategoryId] = useState(
-    novel.category_id || "imported",
+    novel.category_id || 1,
   );
   const [loadingCategories, setLoadingCategories] = useState(false);
 
@@ -41,7 +41,7 @@ const NovelCard: React.FC<NovelCardProps> = ({
     }
   };
 
-  const handleCategorySelect = async (categoryId: string) => {
+  const handleCategorySelect = async (categoryId: number) => {
     try {
       await novelApi.updateMetadata(novel.book_id, {
         category_id: categoryId,
@@ -55,7 +55,7 @@ const NovelCard: React.FC<NovelCardProps> = ({
 
   const currentCategoryName =
     categories.find((c) => c.id === currentCategoryId)?.name ||
-    (currentCategoryId === "imported" ? "Imported" : currentCategoryId);
+    (currentCategoryId === 1 ? "Imported" : `Category ${currentCategoryId}`);
 
   const getStatusBadges = () => {
     const badges = [];

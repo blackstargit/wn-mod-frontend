@@ -4,7 +4,7 @@ export interface Novel {
   author: string;
   cover_url: string;
   webnovel_url?: string;
-  category_id?: string;
+  category_id?: number;
   total_chapters: number;
   scraped: boolean;
   last_read_chapter: number;
@@ -22,9 +22,8 @@ export interface Chapter {
 }
 
 export interface Category {
-  id: string;
+  id: number;
   name: string;
-  is_system: boolean;
   count: number;
 }
 

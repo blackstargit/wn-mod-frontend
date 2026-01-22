@@ -26,7 +26,7 @@ export const novelApi = {
     metadata: {
       last_read_chapter?: number;
       last_accessed_at?: string;
-      category_id?: string;
+      category_id?: number;
     },
   ) => apiClient.patch(`/novels/${book_id}/metadata`, metadata),
 };
@@ -35,6 +35,8 @@ export const novelApi = {
 export const categoriesApi = {
   getCategories: () => apiClient.get("/categories"),
   createCategory: (name: string) => apiClient.post("/categories", { name }),
-  deleteCategory: (category_id: string) =>
+  updateCategory: (category_id: number, name: string) =>
+    apiClient.patch(`/categories/${category_id}`, { name }),
+  deleteCategory: (category_id: number) =>
     apiClient.delete(`/categories/${category_id}`),
 };

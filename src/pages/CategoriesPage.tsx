@@ -8,6 +8,10 @@ const CategoriesPage: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
 
+  // Editing state
+  const [editingId, setEditingId] = useState<number | null>(null);
+  const [editName, setEditName] = useState("");
+
   const loadCategories = async () => {
     try {
       setLoading(true);
@@ -39,7 +43,35 @@ const CategoriesPage: React.FC = () => {
     }
   };
 
-  const handleDeleteCategory = async (categoryId: string) => {
+  const startEditing = (category: Category) => {
+    setEditingId(category.id);
+    setEditName(category.name);
+  };
+
+  const cancelEditing = () => {
+    setEditingId(null);
+    setEditName("");
+  };
+
+  const handleUpdateCategory = async (categoryId: number) => {
+    if (
+      editName.trim() &&
+      editName !== categories.find((c) => c.id === categoryId)?.name
+    ) {
+      try {
+        await categoriesApi.updateCategory(categoryId, editName);
+        setEditingId(null);
+        loadCategories();
+      } catch (err) {
+        console.error("Failed to update category", err);
+        setError("Failed to update category");
+      }
+    } else {
+      cancelEditing();
+    }
+  };
+
+  const handleDeleteCategory = async (categoryId: number) => {
     if (
       window.confirm(
         "Are you sure? Novels in this category will be moved to 'Imported'.",
@@ -108,25 +140,59 @@ const CategoriesPage: React.FC = () => {
             key={category.id}
             className="group bg-slate-800/80 p-5 rounded-xl border border-slate-700 hover:border-blue-500/50 transition-all hover:shadow-lg hover:shadow-blue-500/10"
           >
-            <div className="flex justify-between items-start mb-2">
-              <h3 className="font-bold text-lg text-white group-hover:text-blue-300 transition-colors">
-                {category.name}
-              </h3>
-              {category.is_system && (
-                <span className="text-[10px] uppercase font-bold tracking-wider text-slate-500 bg-slate-900 px-2 py-1 rounded">
-                  System
-                </span>
+            <div className="flex justify-between items-start mb-2 h-8">
+              {editingId === category.id ? (
+                <div className="flex flex-1 gap-2 mr-2">
+                  <input
+                    type="text"
+                    value={editName}
+                    onChange={(e) => setEditName(e.target.value)}
+                    className="flex-1 bg-slate-900 border border-blue-500 rounded px-2 py-1 text-sm text-white focus:outline-none"
+                    autoFocus
+                    onKeyDown={(e) => {
+                      if (e.key === "Enter") handleUpdateCategory(category.id);
+                      if (e.key === "Escape") cancelEditing();
+                    }}
+                  />
+                  <button
+                    onClick={() => handleUpdateCategory(category.id)}
+                    className="text-green-400 hover:text-green-300"
+                  >
+                    ✓
+                  </button>
+                  <button
+                    onClick={cancelEditing}
+                    className="text-red-400 hover:text-red-300"
+                  >
+                    ✕
+                  </button>
+                </div>
+              ) : (
+                <>
+                  <h3 className="font-bold text-lg text-white group-hover:text-blue-300 transition-colors truncate pr-2">
+                    {category.name}
+                  </h3>
+                </>
               )}
             </div>
+
             <div className="flex justify-between items-center text-sm">
               <span className="text-slate-400">{category.count} novels</span>
-              {!category.is_system && (
-                <button
-                  onClick={() => handleDeleteCategory(category.id)}
-                  className="text-red-400 hover:text-red-300 text-xs font-medium opacity-0 group-hover:opacity-100 transition-opacity px-2 py-1 hover:bg-slate-700 rounded"
-                >
-                  Delete
-                </button>
+              {category.id !== 1 && editingId !== category.id && (
+                <div className="flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                  <button
+                    onClick={() => startEditing(category)}
+                    className="text-blue-400 hover:text-blue-300 text-xs font-medium px-2 py-1 hover:bg-slate-700 rounded"
+                  >
+                    Edit
+                  </button>
+                  <button
+                    onClick={() => handleDeleteCategory(category.id)}
+                    className="text-red-400 hover:text-red-300 text-xs font-medium px-2 py-1 hover:bg-slate-700 rounded"
+                  >
+                    Delete
+                  </button>
+                </div>
               )}
             </div>
           </div>
