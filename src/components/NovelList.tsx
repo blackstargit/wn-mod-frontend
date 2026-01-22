@@ -6,14 +6,22 @@ interface NovelListProps {
   novels: Novel[];
   scraping: string | null;
   onScrape: (book_id: string) => void;
+  onDelete: (book_id: string) => void;
   loading: boolean;
+  isSelectionMode?: boolean;
+  selectedNovels?: Set<string>;
+  onToggleSelection?: (book_id: string) => void;
 }
 
 const NovelList: React.FC<NovelListProps> = ({
   novels,
   scraping,
   onScrape,
+  onDelete,
   loading,
+  isSelectionMode = false,
+  selectedNovels = new Set(),
+  onToggleSelection,
 }) => {
   if (loading) {
     return (
@@ -45,7 +53,11 @@ const NovelList: React.FC<NovelListProps> = ({
             key={novel.book_id}
             novel={novel}
             onScrape={onScrape}
+            onDelete={onDelete}
             isScraping={scraping === novel.book_id}
+            isSelectionMode={isSelectionMode}
+            isSelected={selectedNovels.has(novel.book_id)}
+            onToggleSelection={onToggleSelection}
           />
         ))}
       </div>

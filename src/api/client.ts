@@ -29,6 +29,9 @@ export const novelApi = {
       category_id?: number;
     },
   ) => apiClient.patch(`/novels/${book_id}/metadata`, metadata),
+  deleteNovel: (book_id: string) => apiClient.delete(`/novels/${book_id}`),
+  bulkDeleteNovels: (book_ids: string[]) =>
+    apiClient.post("/novels/bulk-delete", { book_ids }),
 };
 
 // Categories API
