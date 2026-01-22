@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import type { Novel, Category } from "../types";
 import { Link } from "react-router-dom";
 import { novelApi, categoriesApi } from "../api/client";
@@ -20,6 +20,19 @@ const NovelCard: React.FC<NovelCardProps> = ({
     novel.category_id || 1,
   );
   const [loadingCategories, setLoadingCategories] = useState(false);
+
+  // Fetch categories on mount to display category name
+  useEffect(() => {
+    const fetchCategories = async () => {
+      try {
+        const res = await categoriesApi.getCategories();
+        setCategories(res.data);
+      } catch (err) {
+        console.error("Failed to load categories", err);
+      }
+    };
+    fetchCategories();
+  }, []);
 
   // Helper to fetch categories if not loaded
   const handleEditCategory = async () => {
@@ -54,8 +67,7 @@ const NovelCard: React.FC<NovelCardProps> = ({
   };
 
   const currentCategoryName =
-    categories.find((c) => c.id === currentCategoryId)?.name ||
-    (currentCategoryId === 1 ? "Imported" : `Category ${currentCategoryId}`);
+    categories.find((c) => c.id === currentCategoryId)?.name;
 
   const getStatusBadges = () => {
     const badges = [];
