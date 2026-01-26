@@ -9,6 +9,7 @@ export interface Chapter {
 export type NovelStatus = "unread" | "reading" | "scraped";
 
 export type {
+  Category,
   CategoryFilterProps,
   LibraryStatsProps,
   NovelCardProps,

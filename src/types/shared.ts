@@ -5,7 +5,9 @@ export interface Novel {
   cover_url: string;
   webnovel_url?: string;
   category_id?: number;
-  total_chapters: number;
+  total_chapters: number; // Scraped chapters count
+  total_chapters_webnovel: number; // Total chapters on webnovel
+  progress: number; // Chapters read on webnovel
   scraped: boolean;
   last_read_chapter: number;
   last_accessed_at?: string;

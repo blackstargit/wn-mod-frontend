@@ -215,6 +215,15 @@ const NovelCard: React.FC<NovelCardProps> = ({
                 )}
               </p>
             )}
+
+            {/* Webnovel Progress */}
+            {novel.progress > 0 && novel.total_chapters_webnovel > 0 && (
+              <p className="text-sm text-purple-400 font-medium">
+                🌐 Progress on Webnovel: {novel.progress}/
+                {novel.total_chapters_webnovel}
+              </p>
+            )}
+
             <p className="text-sm text-slate-600">
               ➕ Added {formatDate(novel.created_at)}
             </p>

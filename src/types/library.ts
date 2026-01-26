@@ -1,6 +1,6 @@
 import type { Novel, LibraryStats } from "./shared";
 
-export interface Category {
+interface Category {
   id: number;
   name: string;
   count: number;
@@ -60,6 +60,7 @@ export type SortOption = "recently-read" | "date-added" | "by-category";
 export type SortOrder = "asc" | "desc";
 
 export type {
+  Category,
   CategoryFilterProps,
   LibraryStatsProps,
   NovelCardProps,
