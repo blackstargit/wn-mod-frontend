@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { categoriesApi } from "../api/client";
 import type { Category } from "../types";
+import { Plus, Edit2, Trash2, X, Check } from "lucide-react";
 
 const CategoriesPage: React.FC = () => {
   const [newCategory, setNewCategory] = useState("");
@@ -35,7 +36,7 @@ const CategoriesPage: React.FC = () => {
       try {
         await categoriesApi.createCategory(newCategory);
         setNewCategory("");
-        loadCategories(); // Reload to get updated list/counts
+        loadCategories();
       } catch (err) {
         console.error("Failed to create category", err);
         setError("Failed to create category");
@@ -72,6 +73,11 @@ const CategoriesPage: React.FC = () => {
   };
 
   const handleDeleteCategory = async (categoryId: number) => {
+    if (categoryId === 1) {
+      alert("Cannot delete the default 'Imported' category.");
+      return;
+    }
+
     if (
       window.confirm(
         "Are you sure? Novels in this category will be moved to 'Imported'.",
@@ -96,13 +102,13 @@ const CategoriesPage: React.FC = () => {
   }
 
   return (
-    <div className="space-y-8">
+    <div className="space-y-8 animate-fade-in">
       {/* Header */}
-      <div className="bg-gradient-to-r from-slate-800/50 to-slate-900/50 backdrop-blur-sm rounded-xl p-6 border border-slate-700/50 shadow-xl">
-        <h2 className="text-2xl font-bold mb-2 bg-gradient-to-r from-blue-400 to-cyan-400 bg-clip-text text-transparent">
-          🏷️ Manage Categories
-        </h2>
-        <p className="text-slate-400 text-sm">
+      <div className="card">
+        <h1 className="text-3xl font-bold mb-2 bg-gradient-to-r from-blue-400 to-cyan-400 bg-clip-text text-transparent">
+          Categories Management
+        </h1>
+        <p className="text-slate-400">
           Organize your library with custom categories
         </p>
       </div>
@@ -113,41 +119,50 @@ const CategoriesPage: React.FC = () => {
         </div>
       )}
 
-      {/* Add New Category */}
-      <div className="bg-slate-800/50 rounded-xl p-6 border border-slate-700/50">
-        <form onSubmit={handleAddCategory} className="flex gap-4">
+      {/* Create New Category */}
+      <div className="card">
+        <h2 className="text-xl font-semibold mb-4 text-white">
+          Create New Category
+        </h2>
+        <form onSubmit={handleAddCategory} className="flex gap-3">
           <input
             type="text"
             value={newCategory}
             onChange={(e) => setNewCategory(e.target.value)}
             placeholder="Enter category name..."
-            className="flex-1 bg-slate-900/50 border border-slate-700 rounded-lg px-4 py-2 text-white focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 transition-all placeholder:text-slate-500"
+            className="flex-1 bg-slate-700 text-white px-4 py-3 rounded-lg border border-slate-600 focus:outline-none focus:border-blue-500 transition-colors"
           />
           <button
             type="submit"
+            className="btn-primary flex items-center gap-2 px-6 bg-gradient-to-r from-blue-600 to-cyan-600 hover:from-blue-700 hover:to-cyan-700"
             disabled={!newCategory.trim()}
-            className="px-6 py-2 bg-gradient-to-r from-blue-500 to-cyan-500 text-white rounded-lg hover:from-blue-600 hover:to-cyan-600 disabled:from-slate-700 disabled:to-slate-700 disabled:text-slate-500 disabled:cursor-not-allowed transition-all font-medium shadow-lg shadow-blue-500/20"
           >
-            Add Category
+            <Plus className="w-5 h-5" />
+            Create Category
           </button>
         </form>
       </div>
 
-      {/* Categories Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-        {categories.map((category) => (
-          <div
-            key={category.id}
-            className="group bg-slate-800/80 p-5 rounded-xl border border-slate-700 hover:border-blue-500/50 transition-all hover:shadow-lg hover:shadow-blue-500/10"
-          >
-            <div className="flex justify-between items-start mb-2 h-8">
+      {/* Categories List */}
+      <div className="card">
+        <h2 className="text-xl font-semibold mb-4 text-white">
+          All Categories ({categories.length})
+        </h2>
+
+        <div className="space-y-2">
+          {categories.map((category) => (
+            <div
+              key={category.id}
+              className="flex items-center justify-between p-4 bg-slate-700/50 rounded-lg border border-slate-600/50 hover:border-blue-500/50 transition-all"
+            >
               {editingId === category.id ? (
-                <div className="flex flex-1 gap-2 mr-2">
+                // Edit Mode
+                <div className="flex items-center gap-3 flex-1">
                   <input
                     type="text"
                     value={editName}
                     onChange={(e) => setEditName(e.target.value)}
-                    className="flex-1 bg-slate-900 border border-blue-500 rounded px-2 py-1 text-sm text-white focus:outline-none"
+                    className="flex-1 bg-slate-600 text-white px-3 py-2 rounded border border-slate-500 focus:outline-none focus:border-blue-500"
                     autoFocus
                     onKeyDown={(e) => {
                       if (e.key === "Enter") handleUpdateCategory(category.id);
@@ -156,47 +171,61 @@ const CategoriesPage: React.FC = () => {
                   />
                   <button
                     onClick={() => handleUpdateCategory(category.id)}
-                    className="text-green-400 hover:text-green-300"
+                    className="p-2 bg-green-500 hover:bg-green-600 text-white rounded transition-colors"
+                    title="Save"
                   >
-                    ✓
+                    <Check className="w-4 h-4" />
                   </button>
                   <button
                     onClick={cancelEditing}
-                    className="text-red-400 hover:text-red-300"
+                    className="p-2 bg-slate-600 hover:bg-slate-500 text-white rounded transition-colors"
+                    title="Cancel"
                   >
-                    ✕
+                    <X className="w-4 h-4" />
                   </button>
                 </div>
               ) : (
+                // View Mode
                 <>
-                  <h3 className="font-bold text-lg text-white group-hover:text-blue-300 transition-colors truncate pr-2">
-                    {category.name}
-                  </h3>
+                  <div className="flex items-center gap-3">
+                    <span className="text-white font-medium">
+                      {category.name}
+                    </span>
+                    <span className="text-xs px-2 py-1 rounded-full bg-blue-500/20 text-blue-400 border border-blue-500/30">
+                      {category.count}{" "}
+                      {category.count === 1 ? "novel" : "novels"}
+                    </span>
+                    {category.id === 1 && (
+                      <span className="text-xs text-slate-500 italic">
+                        (Default)
+                      </span>
+                    )}
+                  </div>
+                  <div className="flex items-center gap-2">
+                    {category.id !== 1 && (
+                      <>
+                        <button
+                          onClick={() => startEditing(category)}
+                          className="p-2 hover:bg-slate-600 rounded transition-colors text-slate-400 hover:text-white"
+                          title="Edit category"
+                        >
+                          <Edit2 className="w-4 h-4" />
+                        </button>
+                        <button
+                          onClick={() => handleDeleteCategory(category.id)}
+                          className="p-2 hover:bg-red-500/20 rounded transition-colors text-slate-400 hover:text-red-400"
+                          title="Delete category"
+                        >
+                          <Trash2 className="w-4 h-4" />
+                        </button>
+                      </>
+                    )}
+                  </div>
                 </>
               )}
             </div>
-
-            <div className="flex justify-between items-center text-sm">
-              <span className="text-slate-400">{category.count} novels</span>
-              {editingId !== category.id && (
-                <div className="flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
-                  <button
-                    onClick={() => startEditing(category)}
-                    className="text-blue-400 hover:text-blue-300 text-xs font-medium px-2 py-1 hover:bg-slate-700 rounded"
-                  >
-                    Edit
-                  </button>
-                  <button
-                    onClick={() => handleDeleteCategory(category.id)}
-                    className="text-red-400 hover:text-red-300 text-xs font-medium px-2 py-1 hover:bg-slate-700 rounded"
-                  >
-                    Delete
-                  </button>
-                </div>
-              )}
-            </div>
-          </div>
-        ))}
+          ))}
+        </div>
       </div>
     </div>
   );
