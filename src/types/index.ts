@@ -20,4 +20,6 @@ export type {
   SortOrder,
 } from "./library";
 
-export type {Novel, LibraryStats} from "./shared"
+export type { Novel, LibraryStats } from "./shared";
+
+export type { Tag, TagCreate, NovelTagsUpdate } from "./tags";

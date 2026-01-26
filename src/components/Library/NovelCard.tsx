@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
-import type { Category, NovelCardProps } from "../../types";
 import { Link } from "react-router-dom";
-import { novelApi, categoriesApi } from "../../api/client";
+import { novelApi, categoriesApi, tagsApi } from "../../api/client";
+import type { Category, NovelCardProps, Tag } from "../../types";
 
 const NovelCard: React.FC<NovelCardProps> = ({
   novel,
@@ -11,13 +11,17 @@ const NovelCard: React.FC<NovelCardProps> = ({
   isSelectionMode = false,
   isSelected = false,
   onToggleSelection,
+  onUpdate,
 }) => {
   const [isEditingCategory, setIsEditingCategory] = useState(false);
+  const [isEditingTags, setIsEditingTags] = useState(false);
   const [categories, setCategories] = useState<Category[]>([]);
+  const [allTags, setAllTags] = useState<Tag[]>([]);
   const [currentCategoryId, setCurrentCategoryId] = useState(
     novel.category_id || 1,
   );
   const [loadingCategories, setLoadingCategories] = useState(false);
+  const [loadingTags, setLoadingTags] = useState(false);
 
   // Fetch categories on mount to display category name
   useEffect(() => {
@@ -52,6 +56,42 @@ const NovelCard: React.FC<NovelCardProps> = ({
     }
   };
 
+  const handleEditTags = async () => {
+    if (!isEditingTags) {
+      setIsEditingTags(true);
+      // Close category editor if open
+      setIsEditingCategory(false);
+
+      if (allTags.length === 0) {
+        setLoadingTags(true);
+        try {
+          const res = await tagsApi.getTags();
+          setAllTags(res.data);
+        } catch (err) {
+          console.error("Failed to load tags", err);
+        } finally {
+          setLoadingTags(false);
+        }
+      }
+    } else {
+      setIsEditingTags(false);
+    }
+  };
+
+  const handleToggleTag = async (tagId: number) => {
+    const isTagged = novel.tags?.some((t) => t.id === tagId);
+    try {
+      if (isTagged) {
+        await tagsApi.removeTagFromNovel(novel.book_id, tagId);
+      } else {
+        await tagsApi.addTagToNovel(novel.book_id, tagId);
+      }
+      onUpdate?.(); // Refresh library data
+    } catch (err) {
+      console.error("Failed to toggle tag", err);
+    }
+  };
+
   const handleCategorySelect = async (categoryId: number) => {
     try {
       await novelApi.updateMetadata(novel.book_id, {
@@ -59,6 +99,7 @@ const NovelCard: React.FC<NovelCardProps> = ({
       });
       setCurrentCategoryId(categoryId);
       setIsEditingCategory(false);
+      onUpdate?.();
     } catch (err) {
       console.error("Failed to update category", err);
     }
@@ -79,6 +120,30 @@ const NovelCard: React.FC<NovelCardProps> = ({
         className="px-2.5 py-1 text-xs font-semibold rounded-full bg-slate-700/50 text-slate-300 border border-slate-600/50 hover:bg-slate-700 hover:text-white transition-colors flex items-center gap-1"
       >
         📂 {currentCategoryName}
+      </button>,
+    );
+
+    // Tags Badges
+    novel.tags?.forEach((tag) => {
+      badges.push(
+        <span
+          key={`tag-${tag.id}`}
+          className="px-2 py-1 text-xs rounded-full bg-slate-700/50 text-slate-400 border border-slate-600/50"
+        >
+          #{tag.name}
+        </span>,
+      );
+    });
+
+    // Add Tag Button
+    badges.push(
+      <button
+        key="add-tag"
+        onClick={handleEditTags}
+        className="px-2 py-1 text-xs rounded-full bg-slate-700/30 text-slate-500 hover:text-purple-400 hover:bg-slate-700/50 border border-transparent hover:border-purple-500/30 transition-all"
+        title="Manage tags"
+      >
+        + Tag
       </button>,
     );
 
@@ -158,7 +223,7 @@ const NovelCard: React.FC<NovelCardProps> = ({
 
       {/* Category Selection Overlay */}
       {isEditingCategory && (
-        <div className="absolute inset-0 bg-slate-900/95 z-20 flex flex-col p-4 animate-in fade-in duration-200">
+        <div className="absolute inset-0 bg-slate-900/95 z-30 flex flex-col p-4 animate-in fade-in duration-200">
           <div className="flex justify-between items-center mb-4">
             <h3 className="font-bold text-white">Select Category</h3>
             <button
@@ -187,6 +252,63 @@ const NovelCard: React.FC<NovelCardProps> = ({
                 </button>
               ))
             )}
+          </div>
+        </div>
+      )}
+
+      {/* Tags Selection Overlay */}
+      {isEditingTags && (
+        <div className="absolute inset-0 bg-slate-900/95 z-30 flex flex-col p-4 animate-in fade-in duration-200">
+          <div className="flex justify-between items-center mb-4">
+            <h3 className="font-bold text-white">Manage Tags</h3>
+            <button
+              onClick={() => setIsEditingTags(false)}
+              className="text-slate-400 hover:text-white"
+            >
+              ✕
+            </button>
+          </div>
+
+          <div className="flex-1 overflow-y-auto space-y-2">
+            {loadingTags ? (
+              <div className="text-center text-slate-500 py-4">Loading...</div>
+            ) : allTags.length === 0 ? (
+              <div className="text-center text-slate-500 py-4">
+                <p>No tags created yet.</p>
+                <Link
+                  to="/tags"
+                  className="text-purple-400 hover:underline mt-2 inline-block"
+                >
+                  Create tags here
+                </Link>
+              </div>
+            ) : (
+              allTags.map((tag) => {
+                const isSelected = novel.tags?.some((t) => t.id === tag.id);
+                return (
+                  <button
+                    key={tag.id}
+                    onClick={() => handleToggleTag(tag.id)}
+                    className={`w-full text-left px-4 py-3 rounded-lg transition-colors flex justify-between items-center ${
+                      isSelected
+                        ? "bg-purple-600/20 text-purple-300 border border-purple-500/30"
+                        : "bg-slate-800 text-slate-300 hover:bg-slate-700 hover:text-white"
+                    }`}
+                  >
+                    <span>{tag.name}</span>
+                    {isSelected && <span>✓</span>}
+                  </button>
+                );
+              })
+            )}
+          </div>
+          <div className="mt-4 pt-4 border-t border-slate-700 text-center">
+            <Link
+              to="/tags"
+              className="text-xs text-slate-500 hover:text-purple-400"
+            >
+              Manage all tags
+            </Link>
           </div>
         </div>
       )}

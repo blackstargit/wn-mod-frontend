@@ -43,3 +43,21 @@ export const categoriesApi = {
   deleteCategory: (category_id: number) =>
     apiClient.delete(`/categories/${category_id}`),
 };
+
+// Tags API
+export const tagsApi = {
+  getTags: () => apiClient.get("/tags"),
+  createTag: (name: string) => apiClient.post("/tags", { name }),
+  updateTag: (tag_id: number, name: string) =>
+    apiClient.patch(`/tags/${tag_id}`, { name }),
+  deleteTag: (tag_id: number) => apiClient.delete(`/tags/${tag_id}`),
+
+  // Novel-tag associations
+  getNovelTags: (book_id: string) => apiClient.get(`/tags/novel/${book_id}`),
+  updateNovelTags: (book_id: string, tag_ids: number[]) =>
+    apiClient.put(`/tags/novel/${book_id}`, { tag_ids }),
+  addTagToNovel: (book_id: string, tag_id: number) =>
+    apiClient.post(`/tags/novel/${book_id}/add/${tag_id}`),
+  removeTagFromNovel: (book_id: string, tag_id: number) =>
+    apiClient.delete(`/tags/novel/${book_id}/remove/${tag_id}`),
+};

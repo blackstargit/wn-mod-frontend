@@ -25,6 +25,7 @@ interface NovelCardProps {
   isSelectionMode?: boolean;
   isSelected?: boolean;
   onToggleSelection?: (book_id: string) => void;
+  onUpdate?: () => void;
 }
 
 interface NovelListProps {
@@ -36,6 +37,7 @@ interface NovelListProps {
   isSelectionMode?: boolean;
   selectedNovels?: Set<string>;
   onToggleSelection?: (book_id: string) => void;
+  onUpdate?: () => void;
 }
 
 interface SelectionControlsProps {
@@ -58,7 +60,11 @@ interface SortControlsProps {
 }
 
 // Sort options for library
-export type SortOption = "recently-read" | "date-added" | "by-category";
+export type SortOption =
+  | "recently-read"
+  | "date-added"
+  | "by-category"
+  | "by-tag";
 export type SortOrder = "asc" | "desc";
 
 export type {

@@ -1,7 +1,4 @@
-import {
-  Link,
-  useLocation,
-} from "react-router-dom";
+import { Link, useLocation } from "react-router-dom";
 
 // Navigation component to handle active states
 const Navigation = () => {
@@ -33,8 +30,18 @@ const Navigation = () => {
       >
         🏷️ Categories
       </Link>
+      <Link
+        to="/tags"
+        className={`px-4 py-2 rounded-lg font-medium transition-all ${
+          isActive("/tags")
+            ? "bg-green-600/20 text-green-400 border border-green-500/30"
+            : "text-slate-400 hover:text-white hover:bg-slate-800"
+        }`}
+      >
+        🔖 Tags
+      </Link>
     </nav>
   );
 };
 
-export default Navigation
+export default Navigation;

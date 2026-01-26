@@ -11,6 +11,7 @@ const NovelList: React.FC<NovelListProps> = ({
   isSelectionMode = false,
   selectedNovels = new Set(),
   onToggleSelection,
+  onUpdate,
 }) => {
   if (loading) {
     return (
@@ -47,6 +48,7 @@ const NovelList: React.FC<NovelListProps> = ({
             isSelectionMode={isSelectionMode}
             isSelected={selectedNovels.has(novel.book_id)}
             onToggleSelection={onToggleSelection}
+            onUpdate={onUpdate}
           />
         ))}
       </div>

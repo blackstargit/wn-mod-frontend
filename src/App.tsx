@@ -1,11 +1,8 @@
-import {
-  BrowserRouter as Router,
-  Routes,
-  Route,
-} from "react-router-dom";
+import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
 import HomePage from "./pages/LibraryPage";
 import ReaderPage from "./pages/ReaderPage";
 import CategoriesPage from "./pages/CategoriesPage";
+import TagsPage from "./pages/TagsPage";
 import Navigation from "./components/Navigation";
 
 function App() {
@@ -18,6 +15,7 @@ function App() {
           <Routes>
             <Route path="/" element={<HomePage />} />
             <Route path="/categories" element={<CategoriesPage />} />
+            <Route path="/tags" element={<TagsPage />} />
             <Route path="/read/:book_id" element={<ReaderPage />} />
             <Route path="/read/:book_id/:chapter" element={<ReaderPage />} />
           </Routes>

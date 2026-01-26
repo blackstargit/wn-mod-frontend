@@ -27,6 +27,7 @@ const SortControls: React.FC<SortControlsProps> = ({
         <option value="recently-read">Recently Read</option>
         <option value="date-added">Date Added</option>
         <option value="by-category">By Category</option>
+        <option value="by-tag">By Tag</option>
       </select>
 
       <button

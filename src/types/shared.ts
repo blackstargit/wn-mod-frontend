@@ -13,6 +13,13 @@ export interface Novel {
   last_accessed_at?: string;
   created_at: string;
   updated_at: string;
+  tags?: Tag[];
+}
+
+interface Tag {
+  id: number;
+  name: string;
+  count: number;
 }
 
 export interface LibraryStats {

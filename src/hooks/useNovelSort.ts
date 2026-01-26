@@ -57,6 +57,29 @@ export function useNovelSort(
           return (aTime - bTime) * multiplier;
         });
 
+      case "by-tag":
+        return novelsCopy.sort((a, b) => {
+          // Get first tag name or empty string if no tags
+          const tagA = a.tags && a.tags.length > 0 ? a.tags[0].name : "";
+          const tagB = b.tags && b.tags.length > 0 ? b.tags[0].name : "";
+
+          // If one has tag and other doesn't, put tagged first (or last)
+          if (!tagA && tagB) return 1; // No tag goes to bottom
+          if (tagA && !tagB) return -1;
+
+          const tagDiff = tagA.localeCompare(tagB) * multiplier;
+          if (tagDiff !== 0) return tagDiff;
+
+          // Secondary sort: Recently read
+          const aTime = a.last_accessed_at
+            ? new Date(a.last_accessed_at).getTime()
+            : 0;
+          const bTime = b.last_accessed_at
+            ? new Date(b.last_accessed_at).getTime()
+            : 0;
+          return (aTime - bTime) * multiplier;
+        });
+
       default:
         return novelsCopy;
     }

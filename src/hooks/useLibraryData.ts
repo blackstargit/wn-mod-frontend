@@ -1,13 +1,14 @@
 import { useState, useCallback } from "react";
-import { libraryApi, novelApi, categoriesApi } from "../api/client";
-import type { Novel, Category } from "../types";
+import { libraryApi, novelApi, categoriesApi, tagsApi } from "../api/client";
+import type { Novel, Category, Tag } from "../types";
 
 /**
- * Hook for managing library data (novels and categories)
+ * Hook for managing library data (novels, categories, and tags)
  */
 export function useLibraryData() {
   const [novels, setNovels] = useState<Novel[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
+  const [tags, setTags] = useState<Tag[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -15,12 +16,14 @@ export function useLibraryData() {
     try {
       setLoading(true);
       setError(null);
-      const [novelsRes, categoriesRes] = await Promise.all([
+      const [novelsRes, categoriesRes, tagsRes] = await Promise.all([
         libraryApi.getNovels(),
         categoriesApi.getCategories(),
+        tagsApi.getTags(),
       ]);
       setNovels(novelsRes.data);
       setCategories(categoriesRes.data);
+      setTags(tagsRes.data);
     } catch (err) {
       console.error("Failed to load library data:", err);
       setError("Failed to load library data");
@@ -58,6 +61,7 @@ export function useLibraryData() {
   return {
     novels,
     categories,
+    tags,
     loading,
     error,
     loadData,

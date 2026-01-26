@@ -16,12 +16,14 @@ import LibraryStatsComponent from "../components/Library/LibraryStats";
 import CategoryFilter from "../components/Library/CategoryFilter";
 import SortControls from "../components/Library/SortControls";
 import SelectionControls from "../components/Library/SelectionControls";
+import TagFilter from "../components/Library/TagFilter";
 import { novelApi } from "../api/client";
 
 const HomePage: React.FC = () => {
   const {
     novels,
     categories,
+    tags,
     loading,
     loadData,
     deleteNovel,
@@ -39,6 +41,10 @@ const HomePage: React.FC = () => {
     "novelSortOrder",
     "desc",
   );
+  const [selectedTags, setSelectedTags] = useLocalStorage<number[]>(
+    "selectedLibraryTags",
+    [],
+  );
 
   const {
     selectedNovels,
@@ -55,11 +61,30 @@ const HomePage: React.FC = () => {
     loadData();
   }, [loadData]);
 
-  // Filter novels by category
+  // Filter novels by category and tags
   const filteredNovels = useMemo(() => {
-    if (selectedCategory === null) return novels;
-    return novels.filter((n) => n.category_id === selectedCategory);
-  }, [novels, selectedCategory]);
+    let result = novels;
+
+    if (selectedCategory !== null) {
+      result = result.filter((n) => n.category_id === selectedCategory);
+    }
+
+    if (selectedTags.length > 0) {
+      result = result.filter((n) =>
+        n.tags?.some((t) => selectedTags.includes(t.id)),
+      );
+    }
+
+    return result;
+  }, [novels, selectedCategory, selectedTags]);
+
+  const handleToggleFilterTag = (tagId: number) => {
+    setSelectedTags((prev) =>
+      prev.includes(tagId)
+        ? prev.filter((id) => id !== tagId)
+        : [...prev, tagId],
+    );
+  };
 
   // Sort novels
   const sortedNovels = useNovelSort(filteredNovels, sortBy, sortOrder);
@@ -150,12 +175,19 @@ const HomePage: React.FC = () => {
       />
 
       <div className="card flex flex-wrap gap-4 items-center justify-between">
-        <SortControls
-          sortBy={sortBy}
-          sortOrder={sortOrder}
-          onSortByChange={setSortBy}
-          onSortOrderChange={setSortOrder}
-        />
+        <div className="flex flex-wrap gap-4 items-center">
+          <SortControls
+            sortBy={sortBy}
+            sortOrder={sortOrder}
+            onSortByChange={setSortBy}
+            onSortOrderChange={setSortOrder}
+          />
+          <TagFilter
+            tags={tags}
+            selectedTags={selectedTags}
+            onToggleTag={handleToggleFilterTag}
+          />
+        </div>
 
         <SelectionControls
           isSelectionMode={isSelectionMode}
@@ -181,6 +213,7 @@ const HomePage: React.FC = () => {
         isSelectionMode={isSelectionMode}
         selectedNovels={selectedNovels}
         onToggleSelection={toggleSelection}
+        onUpdate={loadData}
       />
     </div>
   );
