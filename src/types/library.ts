@@ -46,6 +46,8 @@ interface SelectionControlsProps {
   onExitSelectionMode: () => void;
   onSelectAll: () => void;
   onBulkDelete: () => void;
+  categories?: Category[];
+  onBulkAssignCategory?: (categoryId: number) => void;
 }
 
 interface SortControlsProps {

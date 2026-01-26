@@ -114,6 +114,28 @@ const HomePage: React.FC = () => {
     }
   };
 
+  const handleBulkAssignCategory = async (categoryId: number) => {
+    if (selectedNovels.size === 0) return;
+
+    try {
+      // Update category for all selected novels
+      const updatePromises = Array.from(selectedNovels).map((book_id) =>
+        novelApi.updateMetadata(book_id, { category_id: categoryId }),
+      );
+
+      await Promise.all(updatePromises);
+
+      // Reload data to reflect changes
+      await loadData();
+
+      // Exit selection mode after successful update
+      exitSelectionMode();
+    } catch (error) {
+      console.error("Failed to assign category:", error);
+      alert("Failed to assign category to some novels. Please try again.");
+    }
+  };
+
   return (
     <div className="space-y-8 animate-fade-in">
       <LibraryImport />
@@ -145,6 +167,8 @@ const HomePage: React.FC = () => {
             toggleSelectAll(filteredNovels.map((n) => n.book_id))
           }
           onBulkDelete={handleBulkDelete}
+          categories={categories}
+          onBulkAssignCategory={handleBulkAssignCategory}
         />
       </div>
 
