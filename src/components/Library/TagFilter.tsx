@@ -42,7 +42,7 @@ const TagFilter: React.FC<TagFilterProps> = ({
   );
 
   return (
-    <div className="relative w-full md:w-auto min-w-[200px]" ref={wrapperRef}>
+    <div className="relative w-full md:w-auto min-w-[250px]" ref={wrapperRef}>
       <div
         className="flex items-center gap-2 bg-slate-700 text-white px-3 py-2 rounded-lg border border-slate-600 focus-within:border-purple-500 focus-within:ring-1 focus-within:ring-purple-500 transition-all cursor-text"
         onClick={() => setIsOpen(true)}

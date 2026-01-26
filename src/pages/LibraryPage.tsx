@@ -175,33 +175,34 @@ const HomePage: React.FC = () => {
       />
 
       <div className="card flex flex-wrap gap-4 items-center justify-between">
+        <SortControls
+          sortBy={sortBy}
+          sortOrder={sortOrder}
+          onSortByChange={setSortBy}
+          onSortOrderChange={setSortOrder}
+        />
+
         <div className="flex flex-wrap gap-4 items-center">
-          <SortControls
-            sortBy={sortBy}
-            sortOrder={sortOrder}
-            onSortByChange={setSortBy}
-            onSortOrderChange={setSortOrder}
-          />
           <TagFilter
             tags={tags}
             selectedTags={selectedTags}
             onToggleTag={handleToggleFilterTag}
           />
-        </div>
 
-        <SelectionControls
-          isSelectionMode={isSelectionMode}
-          selectedCount={selectedNovels.size}
-          totalCount={filteredNovels.length}
-          onEnterSelectionMode={enterSelectionMode}
-          onExitSelectionMode={exitSelectionMode}
-          onSelectAll={() =>
-            toggleSelectAll(filteredNovels.map((n) => n.book_id))
-          }
-          onBulkDelete={handleBulkDelete}
-          categories={categories}
-          onBulkAssignCategory={handleBulkAssignCategory}
-        />
+          <SelectionControls
+            isSelectionMode={isSelectionMode}
+            selectedCount={selectedNovels.size}
+            totalCount={filteredNovels.length}
+            onEnterSelectionMode={enterSelectionMode}
+            onExitSelectionMode={exitSelectionMode}
+            onSelectAll={() =>
+              toggleSelectAll(filteredNovels.map((n) => n.book_id))
+            }
+            onBulkDelete={handleBulkDelete}
+            categories={categories}
+            onBulkAssignCategory={handleBulkAssignCategory}
+          />
+        </div>
       </div>
 
       <NovelList

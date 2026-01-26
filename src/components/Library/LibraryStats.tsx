@@ -1,5 +1,5 @@
 import React from "react";
-import { BookOpen, CheckCircle, Eye, BookMarked } from "lucide-react";
+import { BookOpen, CheckCircle, BookMarked } from "lucide-react";
 import type { LibraryStatsProps } from "../../types";
 
 const LibraryStats: React.FC<LibraryStatsProps> = ({ stats }) => {
@@ -18,13 +18,13 @@ const LibraryStats: React.FC<LibraryStatsProps> = ({ stats }) => {
       colorClass: "bg-green-500/10 border-green-500/30",
       textColor: "text-green-400",
     },
-    {
-      label: "Reading",
-      value: stats.reading,
-      icon: Eye,
-      colorClass: "bg-blue-500/10 border-blue-500/30",
-      textColor: "text-blue-400",
-    },
+    // {
+    //   label: "Reading",
+    //   value: stats.reading,
+    //   icon: Eye,
+    //   colorClass: "bg-blue-500/10 border-blue-500/30",
+    //   textColor: "text-blue-400",
+    // },
     {
       label: "Unread",
       value: stats.unread,

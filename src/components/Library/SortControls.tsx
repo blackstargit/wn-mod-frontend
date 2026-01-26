@@ -22,7 +22,7 @@ const SortControls: React.FC<SortControlsProps> = ({
       <select
         value={sortBy}
         onChange={(e) => onSortByChange(e.target.value as SortOption)}
-        className="bg-slate-700 text-white px-4 py-2 rounded-lg border border-slate-600 focus:outline-none focus:border-purple-500 transition-colors cursor-pointer"
+        className="bg-slate-700 text-white px-3 py-1.5 rounded-lg border border-slate-600 focus:outline-none focus:border-purple-500 transition-colors cursor-pointer"
       >
         <option value="recently-read">Recently Read</option>
         <option value="date-added">Date Added</option>
@@ -32,7 +32,7 @@ const SortControls: React.FC<SortControlsProps> = ({
 
       <button
         onClick={toggleSortOrder}
-        className="btn-secondary flex items-center gap-2 rounded-lg p-2"
+        className="btn-secondary flex items-center gap-2 rounded-lg px-3 py-1.5 border-slate-600 focus:outline-none focus:border-purple-500 transition-colors"
         title={`Sort order: ${sortOrder === "desc" ? "Descending" : "Ascending"}`}
       >
         {sortOrder === "desc" ? (
