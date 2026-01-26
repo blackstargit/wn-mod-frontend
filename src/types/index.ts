@@ -1,18 +1,3 @@
-export interface Novel {
-  book_id: string; // Primary key (webnovel_id)
-  title: string;
-  author: string;
-  cover_url: string;
-  webnovel_url?: string;
-  category_id?: number;
-  total_chapters: number;
-  scraped: boolean;
-  last_read_chapter: number;
-  last_accessed_at?: string;
-  created_at: string;
-  updated_at: string;
-}
-
 export interface Chapter {
   id: number;
   book_id: string; // Foreign key to Novel
@@ -21,10 +6,17 @@ export interface Chapter {
   content: string;
 }
 
-export interface Category {
-  id: number;
-  name: string;
-  count: number;
-}
-
 export type NovelStatus = "unread" | "reading" | "scraped";
+
+export type {
+  CategoryFilterProps,
+  LibraryStatsProps,
+  NovelCardProps,
+  NovelListProps,
+  SelectionControlsProps,
+  SortControlsProps,
+  SortOption,
+  SortOrder,
+} from "./library";
+
+export type {Novel, LibraryStats} from "./shared"

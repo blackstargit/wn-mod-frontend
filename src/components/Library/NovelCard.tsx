@@ -1,17 +1,7 @@
 import React, { useState, useEffect } from "react";
-import type { Novel, Category } from "../types";
+import type { Category, NovelCardProps } from "../../types";
 import { Link } from "react-router-dom";
-import { novelApi, categoriesApi } from "../api/client";
-
-interface NovelCardProps {
-  novel: Novel;
-  onScrape: (book_id: string) => void;
-  onDelete: (book_id: string) => void;
-  isScraping: boolean;
-  isSelectionMode?: boolean;
-  isSelected?: boolean;
-  onToggleSelection?: (book_id: string) => void;
-}
+import { novelApi, categoriesApi } from "../../api/client";
 
 const NovelCard: React.FC<NovelCardProps> = ({
   novel,

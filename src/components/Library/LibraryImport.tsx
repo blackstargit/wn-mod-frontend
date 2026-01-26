@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { libraryApi } from "../api/client";
+import { libraryApi } from "../../api/client";
 
 const LibraryImport: React.FC = () => {
   const [file, setFile] = useState<File | null>(null);

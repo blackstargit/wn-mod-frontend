@@ -1,17 +1,6 @@
 import React from "react";
-import type { Novel } from "../types";
+import type { NovelListProps } from "../../types";
 import NovelCard from "./NovelCard";
-
-interface NovelListProps {
-  novels: Novel[];
-  scraping: string | null;
-  onScrape: (book_id: string) => void;
-  onDelete: (book_id: string) => void;
-  loading: boolean;
-  isSelectionMode?: boolean;
-  selectedNovels?: Set<string>;
-  onToggleSelection?: (book_id: string) => void;
-}
 
 const NovelList: React.FC<NovelListProps> = ({
   novels,
