@@ -206,6 +206,8 @@ const HomePage: React.FC = () => {
 
       <NovelList
         novels={sortedNovels}
+        categories={categories}
+        tags={tags}
         scraping={scraping}
         onScrape={handleScrape}
         onDelete={handleDeleteNovel}

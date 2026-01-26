@@ -1,4 +1,5 @@
 import type { Novel, LibraryStats } from "./shared";
+import type { Tag } from "./tags";
 
 interface Category {
   id: number;
@@ -19,6 +20,8 @@ interface LibraryStatsProps {
 
 interface NovelCardProps {
   novel: Novel;
+  categories: Category[];
+  tags: Tag[];
   onScrape: (book_id: string) => void;
   onDelete: (book_id: string) => void;
   isScraping: boolean;
@@ -30,6 +33,8 @@ interface NovelCardProps {
 
 interface NovelListProps {
   novels: Novel[];
+  categories: Category[];
+  tags: Tag[];
   scraping: string | null;
   onScrape: (book_id: string) => void;
   onDelete: (book_id: string) => void;

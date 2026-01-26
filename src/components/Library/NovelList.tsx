@@ -4,6 +4,8 @@ import NovelCard from "./NovelCard";
 
 const NovelList: React.FC<NovelListProps> = ({
   novels,
+  categories,
+  tags,
   scraping,
   onScrape,
   onDelete,
@@ -42,6 +44,8 @@ const NovelList: React.FC<NovelListProps> = ({
           <NovelCard
             key={novel.book_id}
             novel={novel}
+            categories={categories}
+            tags={tags}
             onScrape={onScrape}
             onDelete={onDelete}
             isScraping={scraping === novel.book_id}
