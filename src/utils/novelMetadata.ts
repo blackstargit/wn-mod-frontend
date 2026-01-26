@@ -36,9 +36,9 @@ export const setNovelMetadata = (
 };
 
 export const enrichNovelWithMetadata = (novel: Novel): Novel => {
-  const metadata = getNovelMetadata(novel.id);
+  const metadata = getNovelMetadata(parseInt(novel.book_id));
   if (!metadata) {
-    const newMetadata = setNovelMetadata(novel.id, {});
+    const newMetadata = setNovelMetadata(parseInt(novel.book_id), {});
     return { ...novel, ...newMetadata };
   }
   return { ...novel, ...metadata };
