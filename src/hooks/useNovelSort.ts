@@ -22,10 +22,13 @@ export function useNovelSort(
           const bTime = b.last_accessed_at
             ? new Date(b.last_accessed_at).getTime()
             : 0;
-          if (bTime !== aTime) return (bTime - aTime) * multiplier;
+          // DESC (default): newest first (bTime - aTime)
+          // ASC: oldest first (aTime - bTime)
+          if (bTime !== aTime) return (aTime - bTime) * multiplier;
+          // Fallback to created_at for ties
           return (
-            (new Date(b.created_at).getTime() -
-              new Date(a.created_at).getTime()) *
+            (new Date(a.created_at).getTime() -
+              new Date(b.created_at).getTime()) *
             multiplier
           );
         });
@@ -33,8 +36,8 @@ export function useNovelSort(
       case "date-added":
         return novelsCopy.sort(
           (a, b) =>
-            (new Date(b.created_at).getTime() -
-              new Date(a.created_at).getTime()) *
+            (new Date(a.created_at).getTime() -
+              new Date(b.created_at).getTime()) *
             multiplier,
         );
 
@@ -50,7 +53,8 @@ export function useNovelSort(
           const bTime = b.last_accessed_at
             ? new Date(b.last_accessed_at).getTime()
             : 0;
-          return (bTime - aTime) * multiplier;
+          // Within same category, sort by recently accessed (newest first for DESC)
+          return (aTime - bTime) * multiplier;
         });
 
       default:
