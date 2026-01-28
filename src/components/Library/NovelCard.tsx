@@ -153,12 +153,14 @@ const NovelCard: React.FC<NovelCardProps> = ({
         />
 
         {/* Title */}
-        <h3
-          className="font-bold text-lg text-white leading-tight mb-3 line-clamp-2 pt-3 min-h-[57px]"
-          title={novel.title}
-        >
-          {novel.title}
-        </h3>
+        <Link to={`/book/${novel.book_id}`}>
+          <h3
+            className="font-bold text-lg text-white leading-tight mb-3 line-clamp-2 pt-3 min-h-[57px] hover:text-purple-400 transition-colors cursor-pointer"
+            title={novel.title}
+          >
+            {novel.title}
+          </h3>
+        </Link>
 
         <NovelCardInfo novel={novel} />
 

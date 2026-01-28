@@ -23,3 +23,11 @@ export type {
 export type { Novel, LibraryStats } from "./shared";
 
 export type { Tag, TagCreate, NovelTagsUpdate } from "./tags";
+
+export type {
+  NovelMetadata,
+  TocChapter,
+  TocVolume,
+  Review,
+  NovelDescription,
+} from "./description";

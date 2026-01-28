@@ -20,7 +20,7 @@ const CategoryFilter: React.FC<CategoryFilterProps> = ({
           onClick={() => onSelectCategory(null)}
           className={`px-4 py-2 rounded-lg font-medium transition-all flex items-center gap-2 ${
             selectedCategory === null
-              ? "gradient-bg-primary text-white shadow-lg"
+              ? "bg-[var(--color-accent-dark)]/60 text-white shadow-lg"
               : "btn-secondary"
           }`}
         >

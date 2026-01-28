@@ -19,7 +19,7 @@ const SelectionControls: React.FC<SelectionControlsProps> = ({
     return (
       <button
         onClick={onEnterSelectionMode}
-        className="flex items-center gap-2 p-2 rounded-lg bg-[var(--color-accent-dark)]"
+        className="flex items-center gap-2 py-2 px-3 rounded-lg bg-[var(--color-accent-dark)]/60"
       >
         <CheckSquare className="w-4 h-4 " />
         Select Multiple

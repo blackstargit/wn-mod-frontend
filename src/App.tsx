@@ -3,6 +3,7 @@ import HomePage from "./pages/LibraryPage";
 import ReaderPage from "./pages/ReaderPage";
 import CategoriesPage from "./pages/CategoriesPage";
 import TagsPage from "./pages/TagsPage";
+import BookDescriptionPage from "./pages/BookDescriptionPage";
 import Navigation from "./components/Navigation";
 
 function App() {
@@ -16,6 +17,7 @@ function App() {
             <Route path="/" element={<HomePage />} />
             <Route path="/categories" element={<CategoriesPage />} />
             <Route path="/tags" element={<TagsPage />} />
+            <Route path="/book/:book_id" element={<BookDescriptionPage />} />
             <Route path="/read/:book_id" element={<ReaderPage />} />
             <Route path="/read/:book_id/:chapter" element={<ReaderPage />} />
           </Routes>

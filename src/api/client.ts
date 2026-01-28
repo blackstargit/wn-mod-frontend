@@ -21,6 +21,10 @@ export const novelApi = {
     apiClient.get(`/novels/${book_id}/chapters`),
   scrapeNovel: (book_id: string) =>
     apiClient.post(`/scraper/${book_id}/scrape`),
+  getNovelDescription: (book_id: string) =>
+    apiClient.get(`/scraper/${book_id}/description`),
+  getDescriptionStatus: (book_id: string) =>
+    apiClient.get(`/scraper/${book_id}/description/status`),
   updateMetadata: (
     book_id: string,
     metadata: {
