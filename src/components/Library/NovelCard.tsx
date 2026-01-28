@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from "react";
 import { Link } from "react-router-dom";
-import { novelApi, tagsApi } from "../../api/client";
-import type { NovelCardProps } from "../../types";
+import { novelApi, tagsApi } from "@/api/client";
+import type { NovelCardProps } from "@/types";
 import {
   MoreVertical,
   RefreshCw,

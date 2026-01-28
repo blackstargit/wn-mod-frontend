@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect } from "react";
-import type { Tag } from "../../types";
+import type { Tag } from "@/types";
 import { Search, X, ChevronDown } from "lucide-react";
 
 interface TagFilterProps {

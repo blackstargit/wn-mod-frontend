@@ -1,9 +1,6 @@
 import React from "react";
 import { Loader2, BookOpen } from "lucide-react";
-
-interface ScrapingLoaderProps {
-  message?: string;
-}
+import type { ScrapingLoaderProps } from "@/types";
 
 const ScrapingLoader: React.FC<ScrapingLoaderProps> = ({
   message = "Scraping novel description...",

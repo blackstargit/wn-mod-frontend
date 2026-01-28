@@ -10,9 +10,9 @@ import {
   ChevronDown,
   ChevronRight,
 } from "lucide-react";
-import { novelApi } from "../api/client";
-import type { NovelDescription } from "../types";
-import ScrapingLoader from "../components/ScrapingLoader";
+import { novelApi } from "@/api/client";
+import type { NovelDescription } from "@/types";
+import ScrapingLoader from "@/components/BookDescription/ScrapingLoader";
 
 interface BookDescriptionPageProps {}
 

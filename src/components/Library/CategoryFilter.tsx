@@ -1,6 +1,6 @@
 import React from "react";
 import { Library, Tag } from "lucide-react";
-import type { CategoryFilterProps } from "../../types";
+import type { CategoryFilterProps } from "@/types";
 
 const CategoryFilter: React.FC<CategoryFilterProps> = ({
   categories,

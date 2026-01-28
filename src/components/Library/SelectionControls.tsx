@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import { CheckSquare, Square, Trash2, X, Folder, ChevronDown } from "lucide-react";
-import type { SelectionControlsProps } from "../../types";
+import type { SelectionControlsProps } from "@/types";
 
 const SelectionControls: React.FC<SelectionControlsProps> = ({
   isSelectionMode,

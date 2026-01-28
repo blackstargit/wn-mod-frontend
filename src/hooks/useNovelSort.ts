@@ -1,5 +1,5 @@
 import { useMemo } from "react";
-import type { Novel, SortOption, SortOrder } from "../types";
+import type { Novel, SortOption, SortOrder } from "@/types";
 
 /**
  * Hook for sorting novels based on various criteria

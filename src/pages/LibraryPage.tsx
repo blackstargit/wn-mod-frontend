@@ -4,20 +4,20 @@ import {
   useLocalStorage,
   useNovelSelection,
   useNovelSort,
-} from "../hooks";
+} from "@/hooks";
 import type {
   SortOption,
   SortOrder,
   LibraryStats as StatsType,
-} from "../types";
-import LibraryImport from "../components/Library/LibraryImport";
-import NovelList from "../components/Library/NovelList";
-import LibraryStatsComponent from "../components/Library/LibraryStats";
-import CategoryFilter from "../components/Library/CategoryFilter";
-import SortControls from "../components/Library/SortControls";
-import SelectionControls from "../components/Library/SelectionControls";
-import TagFilter from "../components/Library/TagFilter";
-import { novelApi } from "../api/client";
+} from "@/types";
+import LibraryImport from "@/components/Library/LibraryImport";
+import NovelList from "@/components/Library/NovelList";
+import LibraryStatsComponent from "@/components/Library/LibraryStats";
+import CategoryFilter from "@/components/Library/CategoryFilter";
+import SortControls from "@/components/Library/SortControls";
+import SelectionControls from "@/components/Library/SelectionControls";
+import TagFilter from "@/components/Library/TagFilter";
+import { novelApi } from "@/api/client";
 
 const HomePage: React.FC = () => {
   const {

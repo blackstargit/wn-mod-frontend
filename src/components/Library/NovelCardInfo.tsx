@@ -1,5 +1,5 @@
 import React from "react";
-import type { Novel } from "../../types";
+import type { Novel } from "@/types";
 
 interface NovelCardInfoProps {
   novel: Novel;

@@ -1,5 +1,5 @@
 import React from "react";
-import type { NovelListProps } from "../../types";
+import type { NovelListProps } from "@/types";
 import NovelCard from "./NovelCard";
 
 const NovelList: React.FC<NovelListProps> = ({

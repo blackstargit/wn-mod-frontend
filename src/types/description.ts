@@ -8,6 +8,10 @@ export interface NovelMetadata {
   tag?: string;
 }
 
+export interface ScrapingLoaderProps {
+  message?: string;
+}
+
 export interface TocChapter {
   title: string;
   url: string;

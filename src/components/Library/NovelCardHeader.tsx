@@ -1,5 +1,5 @@
 import React from "react";
-import type { Novel } from "../../types";
+import type { Novel } from "@/types";
 import { Folder, Tag as TagIcon } from "lucide-react";
 
 interface NovelCardHeaderProps {
@@ -27,12 +27,6 @@ const NovelCardHeader: React.FC<NovelCardHeaderProps> = ({
         <span className="truncate max-w-[100px]">{categoryName}</span>
       </button>
 
-      {/* Scraped Status */}
-      {/* {novel.scraped && (
-        <span className="px-2 py-0.5 text-xs font-medium rounded-full bg-green-500/10 text-green-400 border border-green-500/20">
-          Scraped
-        </span>
-      )} */}
       {novel.last_read_chapter > 0 && (
         <span className="px-2 py-0.5 text-xs font-medium rounded-full bg-blue-500/10 text-blue-400 border border-blue-500/20">
           Ch {novel.last_read_chapter}

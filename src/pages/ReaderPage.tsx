@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
-import { novelApi } from "../api/client";
-import type { Chapter, Novel } from "../types";
+import { novelApi } from "@/api/client";
+import type { Chapter, Novel } from "@/types";
 
 const ReaderPage: React.FC = () => {
   const { book_id, chapter } = useParams<{

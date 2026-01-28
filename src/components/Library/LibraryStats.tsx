@@ -1,6 +1,6 @@
 import React from "react";
 import { BookOpen, CheckCircle, BookMarked } from "lucide-react";
-import type { LibraryStatsProps } from "../../types";
+import type { LibraryStatsProps } from "@/types";
 
 const LibraryStats: React.FC<LibraryStatsProps> = ({ stats }) => {
   const statItems = [

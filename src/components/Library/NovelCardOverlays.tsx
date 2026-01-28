@@ -1,6 +1,6 @@
 import React from "react";
 import { Link } from "react-router-dom";
-import type { Category, Novel, Tag } from "../../types";
+import type { Category, Novel, Tag } from "@/types";
 import { X, Check } from "lucide-react";
 
 interface NovelCardOverlaysProps {

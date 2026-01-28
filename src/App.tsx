@@ -1,10 +1,10 @@
 import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
-import HomePage from "./pages/LibraryPage";
-import ReaderPage from "./pages/ReaderPage";
-import CategoriesPage from "./pages/CategoriesPage";
-import TagsPage from "./pages/TagsPage";
-import BookDescriptionPage from "./pages/BookDescriptionPage";
-import Navigation from "./components/Navigation";
+import HomePage from "@/pages/LibraryPage";
+import ReaderPage from "@/pages/ReaderPage";
+import CategoriesPage from "@/pages/CategoriesPage";
+import TagsPage from "@/pages/TagsPage";
+import BookDescriptionPage from "@/pages/BookDescriptionPage";
+import Navigation from "@/components/Navigation";
 
 function App() {
   return (

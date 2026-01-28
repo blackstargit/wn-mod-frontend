@@ -30,4 +30,5 @@ export type {
   TocVolume,
   Review,
   NovelDescription,
+  ScrapingLoaderProps,
 } from "./description";

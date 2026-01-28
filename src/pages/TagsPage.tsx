@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from "react";
-import { tagsApi } from "../api/client";
-import type { Tag } from "../types";
+import { tagsApi } from "@/api/client";
+import type { Tag } from "@/types";
 import { Plus, Edit2, Trash2, X, Check } from "lucide-react";
 
 const TagsPage: React.FC = () => {

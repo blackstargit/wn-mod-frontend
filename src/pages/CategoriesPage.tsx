@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
-import { categoriesApi } from "../api/client";
-import type { Category } from "../types";
+import { categoriesApi } from "@/api/client";
+import type { Category } from "@/types";
 import { Plus, Edit2, Trash2, X, Check } from "lucide-react";
 
 const CategoriesPage: React.FC = () => {

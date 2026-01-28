@@ -1,6 +1,6 @@
 import React from "react";
 import { ArrowUpDown, ArrowUp, ArrowDown } from "lucide-react";
-import type { SortOption, SortControlsProps } from "../../types";
+import type { SortOption, SortControlsProps } from "@/types";
 
 const SortControls: React.FC<SortControlsProps> = ({
   sortBy,

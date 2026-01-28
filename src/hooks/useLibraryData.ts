@@ -1,6 +1,6 @@
 import { useState, useCallback } from "react";
-import { libraryApi, novelApi, categoriesApi, tagsApi } from "../api/client";
-import type { Novel, Category, Tag } from "../types";
+import { libraryApi, novelApi, categoriesApi, tagsApi } from "@/api/client";
+import type { Novel, Category, Tag } from "@/types";
 
 /**
  * Hook for managing library data (novels, categories, and tags)
