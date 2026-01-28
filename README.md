@@ -1,73 +1,92 @@
-# React + TypeScript + Vite
+# Frontend - Novel Reader Manager
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+A modern, high-performance React application for managing and reading novels. Built with a focus on premium aesthetics (Glassmorphism), responsiveness, and user experience.
 
-Currently, two official plugins are available:
+## 🛠️ Technology Stack
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Babel](https://babeljs.io/) (or [oxc](https://oxc.rs) when used in [rolldown-vite](https://vite.dev/guide/rolldown)) for Fast Refresh
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/) for Fast Refresh
+- **Framework**: [React](https://react.dev/) with [Vite](https://vitejs.dev/)
+- **Language**: [TypeScript](https://www.typescriptlang.org/)
+- **Styling**: [Tailwind CSS](https://tailwindcss.com/)
+- **Routing**: [React Router](https://reactrouter.com/)
+- **Icons**: [Lucide React](https://lucide.dev/)
+- **State/Data**: React Hooks (`useState`, `useEffect`) + Axios
 
-## React Compiler
+## 🚀 Getting Started
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+### Prerequisites
 
-## Expanding the ESLint configuration
+- Node.js 16+
+- npm or yarn
 
-If you are developing a production application, we recommend updating the configuration to enable type-aware lint rules:
+### Installation
 
-```js
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
+1.  **Install dependencies**:
 
-      // Remove tseslint.configs.recommended and replace with this
-      tseslint.configs.recommendedTypeChecked,
-      // Alternatively, use this for stricter rules
-      tseslint.configs.strictTypeChecked,
-      // Optionally, add this for stylistic rules
-      tseslint.configs.stylisticTypeChecked,
+    ```bash
+    npm install
+    # or
+    yarn install
+    ```
 
-      // Other configs...
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
+2.  **Start Development Server**:
+
+    ```bash
+    npm run dev
+    ```
+
+    The app will be available at `http://localhost:5173`.
+
+### Build for Production
+
+```bash
+npm run build
 ```
 
-You can also install [eslint-plugin-react-x](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-x) and [eslint-plugin-react-dom](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-dom) for React-specific lint rules:
+## ✨ Key Features
 
-```js
-// eslint.config.js
-import reactX from 'eslint-plugin-react-x'
-import reactDom from 'eslint-plugin-react-dom'
+### 📖 Immersive Reading Experience
 
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
-      // Enable lint rules for React
-      reactX.configs['recommended-typescript'],
-      // Enable lint rules for React DOM
-      reactDom.configs.recommended,
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
+- **Reader Interface**: Clean, distraction-free reading mode.
+- **Navigation**: Easy chapter navigation and volume management.
+- **Progress Tracking**: Automatically saves your last read chapter.
+
+### 📚 Library Management
+
+- **Grid View**: Beautiful card-based layout for your novel collection.
+- **Filtering & Search**: Filter by category, tags, or search by title.
+- **Batch Actions**: Select multiple novels to delete or organize.
+- **Category Management**: Create and assign custom categories.
+
+### 🔍 Smart Integration
+
+- **Auto-Scraping**: Automatically fetches novel descriptions, chapters, and metadata.
+- **Live Status**: Real-time progress indicators for background scraping tasks.
+- **Emoji Parsing**: Converts Webnovel-style stickers (`[img=joy]`) to native emojis (😂).
+- **CORS Proxying**: Seamlessly loads external images via the backend proxy.
+
+### 🎨 Premium UI/UX
+
+- **Glassmorphism**: Modern, translucent UI elements with blur effects.
+- **Animations**: Smooth transitions and loading states (e.g., `ScrapingLoader`).
+- **Responsive Design**: Optimized for both desktop and tablet experiences.
+
+## 📂 Project Structure
+
 ```
+frontend/src/
+├── api/            # API client configuration
+├── components/     # Reusable UI components
+│   ├── Library/    # Library-specific components (NovelCard, Filter)
+│   └── ...
+├── pages/          # Main application pages (Home, Reader, Description)
+├── types/          # TypeScript interface definitions
+├── App.tsx         # Main router configuration
+└── main.tsx        # Entry point
+```
+
+## 🧩 Key Components
+
+- **`BookDescriptionPage`**: Detailed view with Synopsis, Collapsible TOC, and Reviews.
+- **`ReaderPage`**: The core reading interface.
+- **`NovelCard`**: Interactive card component for the library grid.
+- **`ScrapingLoader`**: Animated loading screen for scraping operations.
