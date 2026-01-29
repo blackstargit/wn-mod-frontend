@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useRef } from "react";
+import React, { useEffect, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { novelApi } from "@/api/client";
 import type { Chapter, Novel } from "@/types";
@@ -13,35 +13,13 @@ import {
   ChevronRight,
   Pin,
   PinOff,
+  BookOpen,
+  Sun,
 } from "lucide-react";
-
-// Google Fonts library
-const FONT_LIBRARY = [
-  { name: "Inter", family: "Inter, sans-serif" },
-  { name: "Roboto", family: "Roboto, sans-serif" },
-  { name: "Open Sans", family: "'Open Sans', sans-serif" },
-  { name: "Lato", family: "Lato, sans-serif" },
-  { name: "Montserrat", family: "Montserrat, sans-serif" },
-  { name: "Poppins", family: "Poppins, sans-serif" },
-  { name: "Merriweather", family: "Merriweather, serif" },
-  { name: "Playfair Display", family: "'Playfair Display', serif" },
-  { name: "Lora", family: "Lora, serif" },
-  { name: "PT Serif", family: "'PT Serif', serif" },
-  { name: "Crimson Text", family: "'Crimson Text', serif" },
-  { name: "Source Sans Pro", family: "'Source Sans Pro', sans-serif" },
-  { name: "Raleway", family: "Raleway, sans-serif" },
-  { name: "Ubuntu", family: "Ubuntu, sans-serif" },
-  { name: "Nunito", family: "Nunito, sans-serif" },
-  { name: "Quicksand", family: "Quicksand, sans-serif" },
-  { name: "Josefin Sans", family: "'Josefin Sans', sans-serif" },
-  { name: "Bitter", family: "Bitter, serif" },
-  { name: "Libre Baskerville", family: "'Libre Baskerville', serif" },
-  { name: "EB Garamond", family: "'EB Garamond', serif" },
-  { name: "Noto Serif", family: "'Noto Serif', serif" },
-  { name: "Georgia", family: "Georgia, serif" },
-  { name: "Times New Roman", family: "'Times New Roman', serif" },
-  { name: "Arial", family: "Arial, sans-serif" },
-];
+import {
+  useReaderSettings,
+  FONT_LIBRARY,
+} from "@/contexts/ReaderSettingsContext";
 
 const ReaderPage: React.FC = () => {
   const { book_id, chapter } = useParams<{
@@ -53,56 +31,34 @@ const ReaderPage: React.FC = () => {
   const [chapters, setChapters] = useState<Chapter[]>([]);
   const [currentChapterIndex, setCurrentChapterIndex] = useState(0);
   const [loading, setLoading] = useState(true);
-
-  // Reader settings
-  const [sidebarOpen, setSidebarOpen] = useState(false);
-  const [selectedFont, setSelectedFont] = useState(FONT_LIBRARY[0]);
-  const [favoriteFonts, setFavoriteFonts] = useState<string[]>([]);
   const [fontSearch, setFontSearch] = useState("");
   const [fontDropdownOpen, setFontDropdownOpen] = useState(false);
-  const [isFullscreen, setIsFullscreen] = useState(false);
-  const [sidebarWidth, setSidebarWidth] = useState(320);
-  const [isDetached, setIsDetached] = useState(false);
-  const [isResizing, setIsResizing] = useState(false);
 
-  // Color settings
-  const [textColor, setTextColor] = useState("#e2e8f0");
-  const [contentBgColor, setContentBgColor] = useState("#1e293b");
-  const [favoriteColors, setFavoriteColors] = useState<{
-    text: string[];
-    bg: string[];
-  }>({
-    text: [],
-    bg: [],
-  });
-
-  // Load settings from localStorage
-  useEffect(() => {
-    const savedFont = localStorage.getItem("reader-font");
-    const savedFavorites = localStorage.getItem("reader-favorite-fonts");
-    const savedTextColor = localStorage.getItem("reader-text-color");
-    const savedContentBg = localStorage.getItem("reader-content-bg");
-    const savedFullscreen = localStorage.getItem("reader-fullscreen");
-    const savedSidebarWidth = localStorage.getItem("reader-sidebar-width");
-    const savedDetached = localStorage.getItem("reader-sidebar-detached");
-    const savedFavoriteColors = localStorage.getItem("reader-favorite-colors");
-
-    if (savedFont) {
-      const font = FONT_LIBRARY.find((f) => f.name === savedFont);
-      if (font) setSelectedFont(font);
-    }
-
-    if (savedFavorites) {
-      setFavoriteFonts(JSON.parse(savedFavorites));
-    }
-
-    if (savedTextColor) setTextColor(savedTextColor);
-    if (savedContentBg) setContentBgColor(savedContentBg);
-    if (savedFullscreen) setIsFullscreen(savedFullscreen === "true");
-    if (savedSidebarWidth) setSidebarWidth(parseInt(savedSidebarWidth));
-    if (savedDetached) setIsDetached(savedDetached === "true");
-    if (savedFavoriteColors) setFavoriteColors(JSON.parse(savedFavoriteColors));
-  }, []);
+  // Get settings from context
+  const {
+    selectedFont,
+    favoriteFonts,
+    fontSize,
+    textColor,
+    contentBgColor,
+    screenBgColor,
+    favoriteColors = { text: [], bg: [], screen: [] },
+    isFullscreen,
+    brightness,
+    sidebarOpen,
+    isDetached,
+    setSelectedFont,
+    setFontSize,
+    setTextColor,
+    setContentBgColor,
+    setScreenBgColor,
+    setBrightness,
+    setSidebarOpen,
+    toggleFavorite,
+    toggleFavoriteColor,
+    toggleFullscreen,
+    toggleDetached,
+  } = useReaderSettings();
 
   useEffect(() => {
     if (book_id) {
@@ -185,88 +141,6 @@ const ReaderPage: React.FC = () => {
     }
   };
 
-  const handleFontChange = (font: (typeof FONT_LIBRARY)[0]) => {
-    setSelectedFont(font);
-    localStorage.setItem("reader-font", font.name);
-  };
-
-  const toggleFavorite = (fontName: string) => {
-    const newFavorites = favoriteFonts.includes(fontName)
-      ? favoriteFonts.filter((f) => f !== fontName)
-      : [...favoriteFonts, fontName];
-
-    setFavoriteFonts(newFavorites);
-    localStorage.setItem("reader-favorite-fonts", JSON.stringify(newFavorites));
-  };
-
-  const handleTextColorChange = (color: string) => {
-    setTextColor(color);
-    localStorage.setItem("reader-text-color", color);
-  };
-
-  const handleContentBgChange = (color: string) => {
-    setContentBgColor(color);
-    localStorage.setItem("reader-content-bg", color);
-  };
-
-  const toggleFullscreen = () => {
-    const newValue = !isFullscreen;
-    setIsFullscreen(newValue);
-    localStorage.setItem("reader-fullscreen", newValue.toString());
-  };
-
-  const toggleDetached = () => {
-    const newValue = !isDetached;
-    setIsDetached(newValue);
-    localStorage.setItem("reader-sidebar-detached", newValue.toString());
-  };
-
-  const toggleFavoriteColor = (color: string, type: "text" | "bg") => {
-    const newFavorites = { ...favoriteColors };
-    if (newFavorites[type].includes(color)) {
-      newFavorites[type] = newFavorites[type].filter((c) => c !== color);
-    } else {
-      newFavorites[type] = [...newFavorites[type], color];
-    }
-    setFavoriteColors(newFavorites);
-    localStorage.setItem(
-      "reader-favorite-colors",
-      JSON.stringify(newFavorites),
-    );
-  };
-
-  const handleMouseDown = () => {
-    setIsResizing(true);
-  };
-
-  useEffect(() => {
-    const handleMouseMove = (e: MouseEvent) => {
-      if (isResizing) {
-        const newWidth = e.clientX;
-        if (newWidth >= 280 && newWidth <= 600) {
-          setSidebarWidth(newWidth);
-        }
-      }
-    };
-
-    const handleMouseUp = () => {
-      if (isResizing) {
-        setIsResizing(false);
-        localStorage.setItem("reader-sidebar-width", sidebarWidth.toString());
-      }
-    };
-
-    if (isResizing) {
-      document.addEventListener("mousemove", handleMouseMove);
-      document.addEventListener("mouseup", handleMouseUp);
-    }
-
-    return () => {
-      document.removeEventListener("mousemove", handleMouseMove);
-      document.removeEventListener("mouseup", handleMouseUp);
-    };
-  }, [isResizing, sidebarWidth]);
-
   const filteredFonts = FONT_LIBRARY.filter((font) =>
     font.name.toLowerCase().includes(fontSearch.toLowerCase()),
   );
@@ -304,7 +178,7 @@ const ReaderPage: React.FC = () => {
       {!sidebarOpen && (
         <button
           onClick={() => setSidebarOpen(true)}
-          className="fixed left-4 top-25 z-50 p-2 bg-slate-800/95 hover:bg-slate-700/95 rounded-lg transition-colors border border-slate-700/50 backdrop-blur-md"
+          className="fixed left-4 top-24 z-50 p-2 bg-slate-800/95 hover:bg-slate-700/95 rounded-lg transition-colors border border-slate-700/50 backdrop-blur-md"
         >
           <ChevronRight className="w-5 h-5 text-slate-300" />
         </button>
@@ -313,12 +187,11 @@ const ReaderPage: React.FC = () => {
       <div className="flex">
         {/* Left Sidebar */}
         <div
-          className={`${isDetached ? "fixed" : "fixed"} left-0 top-0 h-full bg-slate-800/95 backdrop-blur-md border-r border-slate-700/50 transition-all duration-300 z-50 ${
-            sidebarOpen ? "" : "translate-x-[-100%]"
+          className={`fixed left-0 top-0 h-full bg-slate-800/95 backdrop-blur-md border-r border-slate-700/50 transition-all duration-300 z-50 ${
+            sidebarOpen ? "w-80" : "translate-x-[-100%] w-80"
           } overflow-hidden`}
-          style={{ width: sidebarOpen ? `${sidebarWidth}px` : "0px" }}
         >
-          <div className="p-6 h-full flex flex-col relative">
+          <div className="p-6 h-full flex flex-col">
             {/* Sidebar Header */}
             <div className="flex items-center justify-between mb-6">
               <h2 className="text-xl font-bold text-white flex items-center gap-2">
@@ -393,7 +266,7 @@ const ReaderPage: React.FC = () => {
                                 <button
                                   key={font.name}
                                   onClick={() => {
-                                    handleFontChange(font);
+                                    setSelectedFont(font);
                                     setFontDropdownOpen(false);
                                     setFontSearch("");
                                   }}
@@ -433,7 +306,7 @@ const ReaderPage: React.FC = () => {
                               <button
                                 key={font.name}
                                 onClick={() => {
-                                  handleFontChange(font);
+                                  setSelectedFont(font);
                                   setFontDropdownOpen(false);
                                   setFontSearch("");
                                 }}
@@ -472,6 +345,47 @@ const ReaderPage: React.FC = () => {
                 </div>
               </div>
 
+              {/* Font Size */}
+              <div className="mb-6">
+                <h3 className="text-sm font-semibold text-slate-300 mb-3">
+                  Font Size
+                </h3>
+                <div className="flex items-center gap-3">
+                  <input
+                    type="range"
+                    min="12"
+                    max="32"
+                    value={fontSize}
+                    onChange={(e) => setFontSize(parseInt(e.target.value))}
+                    className="flex-1 h-2 bg-slate-700 rounded-lg appearance-none cursor-pointer accent-purple-600"
+                  />
+                  <span className="text-white font-mono text-sm w-12 text-right">
+                    {fontSize}px
+                  </span>
+                </div>
+              </div>
+
+              {/* Brightness */}
+              <div className="mb-6">
+                <h3 className="text-sm font-semibold text-slate-300 mb-3 flex items-center gap-2">
+                  <Sun className="w-4 h-4" />
+                  Brightness
+                </h3>
+                <div className="flex items-center gap-3">
+                  <input
+                    type="range"
+                    min="50"
+                    max="150"
+                    value={brightness}
+                    onChange={(e) => setBrightness(parseInt(e.target.value))}
+                    className="flex-1 h-2 bg-slate-700 rounded-lg appearance-none cursor-pointer accent-purple-600"
+                  />
+                  <span className="text-white font-mono text-sm w-12 text-right">
+                    {brightness}%
+                  </span>
+                </div>
+              </div>
+
               {/* Color Settings */}
               <div className="space-y-6">
                 {/* Text Color */}
@@ -480,13 +394,12 @@ const ReaderPage: React.FC = () => {
                     Text Color
                   </h3>
 
-                  {/* Favorite Colors */}
                   {favoriteColors.text.length > 0 && (
                     <div className="flex gap-2 mb-2 flex-wrap">
                       {favoriteColors.text.map((color) => (
                         <button
                           key={color}
-                          onClick={() => handleTextColorChange(color)}
+                          onClick={() => setTextColor(color)}
                           className={`w-8 h-8 rounded-lg border-2 ${
                             textColor === color
                               ? "border-purple-500"
@@ -502,14 +415,14 @@ const ReaderPage: React.FC = () => {
                     <input
                       type="color"
                       value={textColor}
-                      onChange={(e) => handleTextColorChange(e.target.value)}
+                      onChange={(e) => setTextColor(e.target.value)}
                       className="w-12 h-12 rounded-lg cursor-pointer border-2 border-slate-700/50"
                     />
                     <div className="flex-1 flex gap-2">
                       <input
                         type="text"
                         value={textColor}
-                        onChange={(e) => handleTextColorChange(e.target.value)}
+                        onChange={(e) => setTextColor(e.target.value)}
                         className="flex-1 px-3 py-2 bg-slate-900/50 border border-slate-700/50 rounded-lg text-white font-mono text-sm focus:outline-none focus:border-purple-500/50"
                       />
                       <button
@@ -532,13 +445,12 @@ const ReaderPage: React.FC = () => {
                     Content Background
                   </h3>
 
-                  {/* Favorite Colors */}
                   {favoriteColors.bg.length > 0 && (
                     <div className="flex gap-2 mb-2 flex-wrap">
                       {favoriteColors.bg.map((color) => (
                         <button
                           key={color}
-                          onClick={() => handleContentBgChange(color)}
+                          onClick={() => setContentBgColor(color)}
                           className={`w-8 h-8 rounded-lg border-2 ${
                             contentBgColor === color
                               ? "border-purple-500"
@@ -554,14 +466,14 @@ const ReaderPage: React.FC = () => {
                     <input
                       type="color"
                       value={contentBgColor}
-                      onChange={(e) => handleContentBgChange(e.target.value)}
+                      onChange={(e) => setContentBgColor(e.target.value)}
                       className="w-12 h-12 rounded-lg cursor-pointer border-2 border-slate-700/50"
                     />
                     <div className="flex-1 flex gap-2">
                       <input
                         type="text"
                         value={contentBgColor}
-                        onChange={(e) => handleContentBgChange(e.target.value)}
+                        onChange={(e) => setContentBgColor(e.target.value)}
                         className="flex-1 px-3 py-2 bg-slate-900/50 border border-slate-700/50 rounded-lg text-white font-mono text-sm focus:outline-none focus:border-purple-500/50"
                       />
                       <button
@@ -580,10 +492,63 @@ const ReaderPage: React.FC = () => {
                   </div>
                 </div>
 
+                {/* Screen Background Color */}
+                <div>
+                  <h3 className="text-sm font-semibold text-slate-300 mb-3">
+                    Screen Background
+                  </h3>
+
+                  {favoriteColors.screen.length > 0 && (
+                    <div className="flex gap-2 mb-2 flex-wrap">
+                      {favoriteColors.screen.map((color) => (
+                        <button
+                          key={color}
+                          onClick={() => setScreenBgColor(color)}
+                          className={`w-8 h-8 rounded-lg border-2 ${
+                            screenBgColor === color
+                              ? "border-purple-500"
+                              : "border-slate-700/50"
+                          }`}
+                          style={{ backgroundColor: color }}
+                        />
+                      ))}
+                    </div>
+                  )}
+
+                  <div className="flex items-center gap-3">
+                    <input
+                      type="color"
+                      value={screenBgColor}
+                      onChange={(e) => setScreenBgColor(e.target.value)}
+                      className="w-12 h-12 rounded-lg cursor-pointer border-2 border-slate-700/50"
+                    />
+                    <div className="flex-1 flex gap-2">
+                      <input
+                        type="text"
+                        value={screenBgColor}
+                        onChange={(e) => setScreenBgColor(e.target.value)}
+                        className="flex-1 px-3 py-2 bg-slate-900/50 border border-slate-700/50 rounded-lg text-white font-mono text-sm focus:outline-none focus:border-purple-500/50"
+                      />
+                      <button
+                        onClick={() =>
+                          toggleFavoriteColor(screenBgColor, "screen")
+                        }
+                        className="p-2 hover:bg-slate-700/50 rounded-lg transition-colors"
+                      >
+                        {favoriteColors.screen.includes(screenBgColor) ? (
+                          <Star className="w-5 h-5 fill-yellow-400 text-yellow-400" />
+                        ) : (
+                          <StarOff className="w-5 h-5 text-slate-500" />
+                        )}
+                      </button>
+                    </div>
+                  </div>
+                </div>
+
                 {/* Fullscreen Mode */}
                 <div>
                   <h3 className="text-sm font-semibold text-slate-300 mb-3">
-                    Fullscreen Mode
+                    Reading Width
                   </h3>
                   <button
                     onClick={toggleFullscreen}
@@ -621,24 +586,14 @@ const ReaderPage: React.FC = () => {
                 </div>
               </div>
             </div>
-
-            {/* Resize Handle */}
-            <div
-              onMouseDown={handleMouseDown}
-              className="absolute right-0 top-0 bottom-0 w-1 cursor-ew-resize hover:bg-purple-500/50 transition-colors"
-            />
           </div>
         </div>
 
         {/* Main Content */}
         <div
           className={`flex-1 transition-all duration-300 ${
-            sidebarOpen && !isDetached ? `ml-[${sidebarWidth}px]` : "ml-0"
+            sidebarOpen && !isDetached ? "ml-80" : "ml-0"
           }`}
-          style={{
-            marginLeft:
-              sidebarOpen && !isDetached ? `${sidebarWidth}px` : "0px",
-          }}
         >
           <div
             className={`mx-auto transition-all duration-300 ${
@@ -647,12 +602,21 @@ const ReaderPage: React.FC = () => {
           >
             {/* Top Bar */}
             <div className="mb-4 flex items-center justify-between">
-              <button
-                onClick={() => navigate("/")}
-                className="text-slate-400 hover:text-white flex items-center gap-2 transition-colors"
-              >
-                ← Back to Library
-              </button>
+              <div className="flex items-center gap-2">
+                <button
+                  onClick={() => navigate("/")}
+                  className="text-slate-400 hover:text-white flex items-center gap-2 transition-colors"
+                >
+                  ← Back to Library
+                </button>
+                <button
+                  onClick={() => navigate(`/book/${book_id}`)}
+                  className="text-slate-400 hover:text-white flex items-center gap-2 transition-colors"
+                >
+                  <BookOpen className="w-4 h-4" />
+                  Book Details
+                </button>
+              </div>
 
               <button
                 onClick={() => setSidebarOpen(!sidebarOpen)}
@@ -687,8 +651,12 @@ const ReaderPage: React.FC = () => {
               {/* Chapter Content */}
               <div className="prose prose-invert max-w-none mb-8">
                 <div
-                  className="leading-relaxed text-lg"
-                  style={{ fontFamily: selectedFont.family, color: textColor }}
+                  className="leading-relaxed"
+                  style={{
+                    fontFamily: selectedFont.family,
+                    color: textColor,
+                    fontSize: `${fontSize}px`,
+                  }}
                 >
                   {currentChapter.content
                     .split("\n\n")
