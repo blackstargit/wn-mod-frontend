@@ -188,7 +188,7 @@ const NovelCard: React.FC<NovelCardProps> = ({
                 ) : (
                   <Download className="w-4 h-4" />
                 )}
-                {isScraping ? "Scraping..." : "Scrape"}
+                {isScraping ? "Fetching..." : "Fetch Details"}
               </button>
             )}
 

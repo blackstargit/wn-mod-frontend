@@ -52,6 +52,8 @@ const BookDescriptionPage: React.FC<BookDescriptionPageProps> = () => {
   const [bookData, setBookData] = useState<NovelDescription | null>(null);
   const [loading, setLoading] = useState(true);
   const [scraping, setScraping] = useState(false);
+  const [scrapingChapters, setScrapingChapters] = useState(false);
+  const [chaptersScraped, setChaptersScraped] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const pollingIntervalRef = useRef<number | null>(null);
 
@@ -130,8 +132,37 @@ const BookDescriptionPage: React.FC<BookDescriptionPageProps> = () => {
     }
   };
 
+  // Check if chapters have been scraped
+  const checkChaptersScraped = async () => {
+    if (!book_id) return;
+    try {
+      const response = await novelApi.getChapters(book_id);
+      setChaptersScraped(response.data && response.data.length > 0);
+    } catch (err) {
+      setChaptersScraped(false);
+    }
+  };
+
+  // Handle chapter scraping
+  const handleScrapeChapters = async () => {
+    if (!book_id) return;
+    setScrapingChapters(true);
+    try {
+      await novelApi.scrapeNovel(book_id);
+      // Wait a bit then check if chapters were scraped
+      setTimeout(() => {
+        checkChaptersScraped();
+        setScrapingChapters(false);
+      }, 3000);
+    } catch (err) {
+      console.error("Error scraping chapters:", err);
+      setScrapingChapters(false);
+    }
+  };
+
   useEffect(() => {
     fetchDescription();
+    checkChaptersScraped();
 
     // Cleanup polling on unmount
     return () => {
@@ -464,13 +495,34 @@ const BookDescriptionPage: React.FC<BookDescriptionPageProps> = () => {
         </div>
 
         {/* Action Button */}
-        <div className="mt-6 flex justify-center">
-          <Link
-            to={`/read/${book_id}`}
-            className="px-8 py-4 bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-500 hover:to-pink-500 text-white font-semibold rounded-xl shadow-lg shadow-purple-900/50 transition-all transform hover:scale-105"
-          >
-            Start Reading
-          </Link>
+        <div className="mt-6 flex justify-center gap-4">
+          {chaptersScraped ? (
+            <Link
+              to={`/read/${book_id}`}
+              className="px-8 py-4 bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-500 hover:to-pink-500 text-white font-semibold rounded-xl shadow-lg shadow-purple-900/50 transition-all transform hover:scale-105"
+            >
+              <BookOpen className="w-5 h-5 inline mr-2" />
+              Start Reading
+            </Link>
+          ) : (
+            <button
+              onClick={handleScrapeChapters}
+              disabled={scrapingChapters}
+              className="px-8 py-4 bg-gradient-to-r from-blue-600 to-cyan-600 hover:from-blue-500 hover:to-cyan-500 disabled:from-slate-600 disabled:to-slate-600 text-white font-semibold rounded-xl shadow-lg shadow-blue-900/50 transition-all transform hover:scale-105 disabled:cursor-not-allowed disabled:transform-none"
+            >
+              {scrapingChapters ? (
+                <>
+                  <div className="w-5 h-5 inline mr-2 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                  Scraping Chapters...
+                </>
+              ) : (
+                <>
+                  <BookOpen className="w-5 h-5 inline mr-2" />
+                  Scrape Chapters
+                </>
+              )}
+            </button>
+          )}
         </div>
       </div>
     </div>

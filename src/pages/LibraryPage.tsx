@@ -1,15 +1,12 @@
 import React, { useEffect, useMemo } from "react";
+import { useNavigate } from "react-router-dom";
 import {
   useLibraryData,
   useLocalStorage,
   useNovelSelection,
   useNovelSort,
 } from "@/hooks";
-import type {
-  SortOption,
-  SortOrder,
-  LibraryStats as StatsType,
-} from "@/types";
+import type { SortOption, SortOrder, LibraryStats as StatsType } from "@/types";
 import LibraryImport from "@/components/Library/LibraryImport";
 import NovelList from "@/components/Library/NovelList";
 import LibraryStatsComponent from "@/components/Library/LibraryStats";
@@ -20,6 +17,7 @@ import TagFilter from "@/components/Library/TagFilter";
 import { novelApi } from "@/api/client";
 
 const HomePage: React.FC = () => {
+  const navigate = useNavigate();
   const {
     novels,
     categories,
@@ -104,11 +102,11 @@ const HomePage: React.FC = () => {
   const handleScrape = async (book_id: string) => {
     setScraping(book_id);
     try {
-      await novelApi.scrapeNovel(book_id);
-      setTimeout(() => loadData(), 2000);
+      await novelApi.getNovelDescription(book_id);
+      // Navigate to book description page after fetching
+      navigate(`/book/${book_id}`);
     } catch (error) {
       console.error(error);
-    } finally {
       setScraping(null);
     }
   };
