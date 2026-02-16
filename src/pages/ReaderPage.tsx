@@ -2,7 +2,7 @@ import React, { useEffect, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { novelApi } from "@/api/client";
 import type { Chapter, Novel } from "@/types";
-import { Settings, ChevronRight, BookOpen } from "lucide-react";
+import { Settings, ChevronRight, BookOpen, ArrowLeft } from "lucide-react";
 import { useReaderSettings } from "@/contexts/ReaderSettingsContext";
 import ReaderSettingsSidebar from "@/components/ReaderSettingsSidebar";
 
@@ -162,19 +162,19 @@ const ReaderPage: React.FC = () => {
           >
             {/* Top Bar */}
             <div className="mb-4 flex items-center justify-between">
-              <div className="flex items-center gap-2">
+              <div className="flex items-center gap-6">
                 <button
                   onClick={() => navigate("/")}
                   className="text-slate-400 hover:text-white flex items-center gap-2 transition-colors"
                 >
-                  ← Back to Library
+                  📚 Library
                 </button>
                 <button
                   onClick={() => navigate(`/book/${book_id}`)}
                   className="text-slate-400 hover:text-white flex items-center gap-2 transition-colors"
                 >
                   <BookOpen className="w-4 h-4" />
-                  Book Details
+                  Description
                 </button>
               </div>
 

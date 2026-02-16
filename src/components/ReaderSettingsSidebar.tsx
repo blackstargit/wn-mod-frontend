@@ -364,9 +364,9 @@ const ReaderSettingsSidebar: React.FC = () => {
                 Screen Background
               </h3>
 
-              {favoriteColors.screen.length > 0 && (
+              {favoriteColors.screen?.length > 0 && (
                 <div className="flex gap-2 mb-2 flex-wrap">
-                  {favoriteColors.screen.map((color) => (
+                  {favoriteColors.screen?.map((color) => (
                     <button
                       key={color}
                       onClick={() => setScreenBgColor(color)}
@@ -399,7 +399,7 @@ const ReaderSettingsSidebar: React.FC = () => {
                     onClick={() => toggleFavoriteColor(screenBgColor, "screen")}
                     className="p-2 hover:bg-slate-700/50 rounded-lg transition-colors"
                   >
-                    {favoriteColors.screen.includes(screenBgColor) ? (
+                    {favoriteColors.screen?.includes(screenBgColor) ? (
                       <Star className="w-5 h-5 fill-yellow-400 text-yellow-400" />
                     ) : (
                       <StarOff className="w-5 h-5 text-slate-500" />
