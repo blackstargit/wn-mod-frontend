@@ -2,7 +2,7 @@ import React, { useEffect, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { novelApi } from "@/api/client";
 import type { Chapter, Novel } from "@/types";
-import { Settings, ChevronRight, BookOpen, ArrowLeft } from "lucide-react";
+import { Settings, ChevronRight, BookOpen, ChevronLeft } from "lucide-react";
 import { useReaderSettings } from "@/contexts/ReaderSettingsContext";
 import ReaderSettingsSidebar from "@/components/ReaderSettingsSidebar";
 
@@ -139,7 +139,8 @@ const ReaderPage: React.FC = () => {
       {!sidebarOpen && (
         <button
           onClick={() => setSidebarOpen(true)}
-          className="fixed left-4 top-24 z-50 p-2 bg-slate-800/95 hover:bg-slate-700/95 rounded-lg transition-colors border border-slate-700/50 backdrop-blur-md"
+          style={{ position: "fixed", left: "1rem", top: "5rem", zIndex: 9999 }}
+          className="p-2 bg-slate-800/95 hover:bg-slate-700/95 rounded-lg transition-colors border border-slate-700/50 backdrop-blur-md shadow-xl"
         >
           <ChevronRight className="w-5 h-5 text-slate-300" />
         </button>
@@ -147,9 +148,16 @@ const ReaderPage: React.FC = () => {
 
       <div className="flex">
         {/* Reader Settings Sidebar Component */}
-        <ReaderSettingsSidebar />
+        <ReaderSettingsSidebar
+          onTTS={handleTTS}
+          onPrev={handlePrevious}
+          onNext={handleNext}
+          hasPrev={currentChapterIndex > 0}
+          hasNext={currentChapterIndex < chapters.length - 1}
+        />
 
         {/* Main Content */}
+        {/* ... (keep className same) */}
         <div
           className={`flex-1 transition-all duration-300 ${
             sidebarOpen && !isDetached ? "ml-80" : "ml-0"
@@ -177,13 +185,34 @@ const ReaderPage: React.FC = () => {
                   Description
                 </button>
               </div>
+            </div>
 
+            {/* Top Navigation */}
+            <div className="flex justify-between items-center my-3">
               <button
-                onClick={() => setSidebarOpen(!sidebarOpen)}
-                className="p-2 bg-slate-800/50 hover:bg-slate-700/50 rounded-lg transition-colors border border-slate-700/50"
+                onClick={handlePrevious}
+                disabled={currentChapterIndex === 0}
+                className="px-4 py-2 bg-slate-800/50 hover:bg-slate-700/50 text-slate-300 rounded-lg disabled:opacity-50 disabled:cursor-not-allowed transition-colors border border-slate-700/50 flex items-center gap-2"
               >
-                <Settings className="w-5 h-5 text-slate-300" />
+                <ChevronLeft className="w-4 h-4" />
+                Previous
               </button>
+              <div className="flex items-center gap-4">
+                <button
+                  onClick={() => setSidebarOpen(!sidebarOpen)}
+                  className="p-2 bg-slate-800/50 hover:bg-slate-700/50 rounded-lg transition-colors border border-slate-700/50"
+                >
+                  <Settings className="w-5 h-5 text-slate-300" />
+                </button>
+                <button
+                  onClick={handleNext}
+                  disabled={currentChapterIndex === chapters.length - 1}
+                  className="px-4 py-2 bg-slate-800/50 hover:bg-slate-700/50 text-slate-300 rounded-lg disabled:opacity-50 disabled:cursor-not-allowed transition-colors border border-slate-700/50 flex items-center gap-2"
+                >
+                  Next
+                  <ChevronRight className="w-4 h-4" />
+                </button>
+              </div>
             </div>
 
             <div
@@ -238,12 +267,7 @@ const ReaderPage: React.FC = () => {
                   ← Previous
                 </button>
 
-                <button
-                  onClick={handleTTS}
-                  className="px-6 py-3 bg-gradient-to-r from-blue-500 to-blue-600 text-white rounded-xl hover:from-blue-600 hover:to-blue-700 transition-all font-semibold shadow-lg"
-                >
-                  🔊 TTS
-                </button>
+                {/* TTS Button moved to settings */}
 
                 <button
                   onClick={handleNext}

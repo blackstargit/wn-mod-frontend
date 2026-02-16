@@ -209,7 +209,7 @@ const NovelCard: React.FC<NovelCardProps> = ({
                     className="flex items-center gap-3 px-4 py-3 text-left hover:bg-slate-700 transition-colors text-slate-200 text-sm border-b border-slate-700/50 disabled:opacity-50"
                   >
                     <RefreshCw className="w-4 h-4" />
-                    Rescrape Novel
+                    Rescrape Description
                   </button>
                   <button
                     onClick={handleDelete}

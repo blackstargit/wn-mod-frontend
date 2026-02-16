@@ -10,13 +10,30 @@ import {
   Pin,
   PinOff,
   Sun,
+  Volume2,
+  ChevronLeft,
+  ChevronRight,
 } from "lucide-react";
 import {
   useReaderSettings,
   FONT_LIBRARY,
 } from "@/contexts/ReaderSettingsContext";
 
-const ReaderSettingsSidebar: React.FC = () => {
+interface ReaderSettingsSidebarProps {
+  onTTS: () => void;
+  onPrev: () => void;
+  onNext: () => void;
+  hasPrev: boolean;
+  hasNext: boolean;
+}
+
+const ReaderSettingsSidebar: React.FC<ReaderSettingsSidebarProps> = ({
+  onTTS,
+  onPrev,
+  onNext,
+  hasPrev,
+  hasNext,
+}) => {
   const [fontSearch, setFontSearch] = useState("");
   const [fontDropdownOpen, setFontDropdownOpen] = useState(false);
 
@@ -89,6 +106,33 @@ const ReaderSettingsSidebar: React.FC = () => {
 
         {/* Scrollable Content */}
         <div className="flex-1 overflow-y-auto pr-2">
+          {/* Controls */}
+          <div className="mb-6 grid grid-cols-2 gap-2">
+            <button
+              onClick={onPrev}
+              disabled={!hasPrev}
+              className="col-span-1 flex items-center justify-center gap-2 p-3 bg-slate-700/50 hover:bg-slate-600/50 disabled:opacity-50 disabled:cursor-not-allowed rounded-lg text-white transition-colors"
+            >
+              <ChevronLeft className="w-4 h-4" />
+              Prev
+            </button>
+            <button
+              onClick={onNext}
+              disabled={!hasNext}
+              className="col-span-1 flex items-center justify-center gap-2 p-3 bg-slate-700/50 hover:bg-slate-600/50 disabled:opacity-50 disabled:cursor-not-allowed rounded-lg text-white transition-colors"
+            >
+              Next
+              <ChevronRight className="w-4 h-4" />
+            </button>
+            <button
+              onClick={onTTS}
+              className="col-span-2 flex items-center justify-center gap-2 p-3 bg-blue-600/20 hover:bg-blue-600/30 text-blue-400 rounded-lg transition-colors border border-blue-500/30"
+            >
+              <Volume2 className="w-4 h-4" />
+              Text to Speech
+            </button>
+          </div>
+
           {/* Font Selection */}
           <div className="mb-6">
             <h3 className="text-sm font-semibold text-slate-300 mb-3">
