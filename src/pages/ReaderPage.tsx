@@ -4,7 +4,9 @@ import { novelApi } from "@/api/client";
 import type { Chapter, Novel } from "@/types";
 import { Settings, ChevronRight, BookOpen, ChevronLeft } from "lucide-react";
 import { useReaderSettings } from "@/contexts/ReaderSettingsContext";
+import { useTTS } from "@/contexts/TTSContext";
 import ReaderSettingsSidebar from "@/components/ReaderSettingsSidebar";
+import TTSPlayer from "@/components/TTSPlayer";
 
 const ReaderPage: React.FC = () => {
   const { book_id, chapter } = useParams<{
@@ -28,6 +30,8 @@ const ReaderPage: React.FC = () => {
     isDetached,
     setSidebarOpen,
   } = useReaderSettings();
+
+  const tts = useTTS();
 
   useEffect(() => {
     if (book_id) {
@@ -105,8 +109,14 @@ const ReaderPage: React.FC = () => {
 
   const handleTTS = () => {
     if (currentChapter) {
-      const utterance = new SpeechSynthesisUtterance(currentChapter.content);
-      window.speechSynthesis.speak(utterance);
+      // Parse chapter content into paragraphs
+      const paragraphs = currentChapter.content
+        .split("\n\n")
+        .map((p) => p.trim())
+        .filter((p) => p.length > 0);
+
+      // Start TTS from the beginning
+      tts.speak(paragraphs, 0);
     }
   };
 
@@ -281,6 +291,9 @@ const ReaderPage: React.FC = () => {
           </div>
         </div>
       </div>
+
+      {/* TTS Player Popup */}
+      <TTSPlayer />
     </>
   );
 };

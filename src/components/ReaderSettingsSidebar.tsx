@@ -20,6 +20,7 @@ import {
   useReaderSettings,
   FONT_LIBRARY,
 } from "@/contexts/ReaderSettingsContext";
+import { useTTS } from "@/contexts/TTSContext";
 
 interface ReaderSettingsSidebarProps {
   onTTS: () => void;
@@ -69,6 +70,8 @@ const ReaderSettingsSidebar: React.FC<ReaderSettingsSidebarProps> = ({
     toggleFullscreen,
     toggleDetached,
   } = useReaderSettings();
+
+  const tts = useTTS();
 
   const filteredFonts = FONT_LIBRARY.filter((font) =>
     font.name.toLowerCase().includes(fontSearch.toLowerCase()),
@@ -544,13 +547,85 @@ const ReaderSettingsSidebar: React.FC<ReaderSettingsSidebarProps> = ({
           {/* TTS Tab */}
           {activeTab === "tts" && (
             <div className="space-y-6">
+              {/* Voice Selection */}
+              <div>
+                <h3 className="text-sm font-semibold text-slate-300 mb-3">
+                  Voice
+                </h3>
+                <select
+                  value={tts.selectedVoice?.name || ""}
+                  onChange={(e) => {
+                    const voice = tts.availableVoices.find(
+                      (v) => v.name === e.target.value,
+                    );
+                    if (voice) tts.setVoice(voice);
+                  }}
+                  className="w-full px-3 py-2 bg-slate-900/50 border border-slate-700/50 rounded-lg text-white focus:outline-none focus:border-purple-500/50"
+                >
+                  {tts.availableVoices.length === 0 && (
+                    <option>Loading voices...</option>
+                  )}
+                  {tts.availableVoices.map((voice) => (
+                    <option key={voice.name} value={voice.name}>
+                      {voice.name} ({voice.lang})
+                    </option>
+                  ))}
+                </select>
+                <p className="mt-2 text-xs text-slate-400">
+                  {tts.availableVoices.length} voice
+                  {tts.availableVoices.length !== 1 ? "s" : ""} available
+                </p>
+              </div>
+
+              {/* Playback Speed */}
+              <div>
+                <h3 className="text-sm font-semibold text-slate-300 mb-3">
+                  Playback Speed
+                </h3>
+                <div className="flex items-center gap-3 mb-3">
+                  <input
+                    type="range"
+                    min="0.5"
+                    max="2.0"
+                    step="0.1"
+                    value={tts.playbackRate}
+                    onChange={(e) =>
+                      tts.setPlaybackRate(parseFloat(e.target.value))
+                    }
+                    className="flex-1 h-2 bg-slate-700 rounded-lg appearance-none cursor-pointer accent-purple-600"
+                  />
+                  <span className="text-white font-mono text-sm w-12 text-right">
+                    {tts.playbackRate.toFixed(1)}x
+                  </span>
+                </div>
+
+                {/* Preset Buttons */}
+                <div className="grid grid-cols-4 gap-2">
+                  {[0.75, 1.0, 1.25, 1.5].map((rate) => (
+                    <button
+                      key={rate}
+                      onClick={() => tts.setPlaybackRate(rate)}
+                      className={`px-3 py-2 rounded-lg text-sm font-medium transition-all ${
+                        tts.playbackRate === rate
+                          ? "bg-purple-600/20 text-purple-400 border border-purple-500/50"
+                          : "bg-slate-700/50 text-slate-300 hover:bg-slate-600/50"
+                      }`}
+                    >
+                      {rate}x
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              {/* Start TTS Button */}
               <div>
                 <h3 className="text-sm font-semibold text-slate-300 mb-3">
                   Text to Speech
                 </h3>
                 <button
                   onClick={onTTS}
-                  className="w-full flex items-center justify-center gap-2 p-4 bg-blue-600/20 hover:bg-blue-600/30 text-blue-400 rounded-lg transition-colors border border-blue-500/30"
+                  disabled={!tts.selectedVoice}
+                  className="w-full flex items-center justify-center gap-2 p-4 bg-blue-600/20 hover:bg-blue-600/30 disabled:opacity-50 disabled:cursor-not-allowed text-blue-400 rounded-lg transition-colors border border-blue-500/30"
                 >
                   <Volume2 className="w-5 h-5" />
                   <span className="font-semibold">Start Text to Speech</span>

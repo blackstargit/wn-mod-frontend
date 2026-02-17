@@ -9,6 +9,7 @@ import {
   ReaderSettingsProvider,
   useReaderSettings,
 } from "@/contexts/ReaderSettingsContext";
+import { TTSProvider } from "@/contexts/TTSContext";
 
 function AppContent() {
   const { screenBgColor, brightness } = useReaderSettings();
@@ -40,9 +41,11 @@ function AppContent() {
 function App() {
   return (
     <ReaderSettingsProvider>
-      <Router>
-        <AppContent />
-      </Router>
+      <TTSProvider>
+        <Router>
+          <AppContent />
+        </Router>
+      </TTSProvider>
     </ReaderSettingsProvider>
   );
 }
