@@ -1,3 +1,4 @@
+import { useLocalStorage } from "@/hooks";
 import React, {
   createContext,
   useContext,
@@ -115,7 +116,7 @@ export const ReaderSettingsProvider: React.FC<ReaderSettingsProviderProps> = ({
   });
   const [isFullscreen, setIsFullscreenState] = useState(false);
   const [brightness, setBrightnessState] = useState(100);
-  const [sidebarOpen, setSidebarOpenState] = useState(false);
+  const [sidebarOpen, setSidebarOpenState] = useLocalStorage<boolean>("reader-sidebar-open", false);
   const [isDetached, setIsDetachedState] = useState(false);
 
   // Load settings from localStorage on mount
