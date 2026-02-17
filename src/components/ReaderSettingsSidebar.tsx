@@ -567,12 +567,11 @@ const ReaderSettingsSidebar: React.FC<ReaderSettingsSidebarProps> = ({
                   )}
 
                   {/* Offline Voices */}
-                  {tts.availableVoices.filter(
-                    (v) => !v.name.toLowerCase().includes("google"),
-                  ).length > 0 && (
+                  {tts.availableVoices.filter((v) => v.localService !== false)
+                    .length > 0 && (
                     <optgroup label="🔒 Offline Voices (Work without internet)">
                       {tts.availableVoices
-                        .filter((v) => !v.name.toLowerCase().includes("google"))
+                        .filter((v) => v.localService !== false)
                         .map((voice) => (
                           <option key={voice.name} value={voice.name}>
                             {voice.name} ({voice.lang})
@@ -582,12 +581,11 @@ const ReaderSettingsSidebar: React.FC<ReaderSettingsSidebarProps> = ({
                   )}
 
                   {/* Online Voices */}
-                  {tts.availableVoices.filter((v) =>
-                    v.name.toLowerCase().includes("google"),
-                  ).length > 0 && (
+                  {tts.availableVoices.filter((v) => v.localService === false)
+                    .length > 0 && (
                     <optgroup label="🌐 Online Voices (Require internet)">
                       {tts.availableVoices
-                        .filter((v) => v.name.toLowerCase().includes("google"))
+                        .filter((v) => v.localService === false)
                         .map((voice) => (
                           <option key={voice.name} value={voice.name}>
                             {voice.name} ({voice.lang})
@@ -598,15 +596,13 @@ const ReaderSettingsSidebar: React.FC<ReaderSettingsSidebarProps> = ({
                 </select>
                 <p className="mt-2 text-xs text-slate-400">
                   {
-                    tts.availableVoices.filter(
-                      (v) => !v.name.toLowerCase().includes("google"),
-                    ).length
+                    tts.availableVoices.filter((v) => v.localService !== false)
+                      .length
                   }{" "}
                   offline,{" "}
                   {
-                    tts.availableVoices.filter((v) =>
-                      v.name.toLowerCase().includes("google"),
-                    ).length
+                    tts.availableVoices.filter((v) => v.localService === false)
+                      .length
                   }{" "}
                   online
                 </p>

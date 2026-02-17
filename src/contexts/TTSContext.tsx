@@ -150,10 +150,19 @@ export const TTSProvider: React.FC<{ children: React.ReactNode }> = ({
 
       // Wait for cancel to complete
       setTimeout(() => {
-        // Detect if this is an online voice (Google voices have stricter limits)
-        const isOnlineVoice = selectedVoice.name
-          .toLowerCase()
-          .includes("google");
+        // Detect if this is an online voice
+        // Online voices have localService = false (they require internet)
+        // Offline voices have localService = true (built into OS)
+        const isOnlineVoice = selectedVoice.localService === false;
+
+        // Debug logging
+        console.log("[TTS] Voice properties:", {
+          name: selectedVoice.name,
+          lang: selectedVoice.lang,
+          localService: selectedVoice.localService,
+          voiceURI: selectedVoice.voiceURI,
+          isOnlineVoice: isOnlineVoice,
+        });
 
         // Online voices: use smaller chunks (5 paragraphs max)
         // Offline voices: use entire chapter for zero lag
