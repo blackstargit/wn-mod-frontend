@@ -1,25 +1,30 @@
 import React, { useEffect, useState } from "react";
-import { useParams, useNavigate } from "react-router-dom";
+import { useParams } from "react-router-dom";
 import { novelApi } from "@/api/client";
 import type { Chapter, Novel } from "@/types";
-import { Settings, ChevronRight, BookOpen, ChevronLeft } from "lucide-react";
+import { ChevronRight } from "lucide-react";
 import { useReaderSettings } from "@/contexts/ReaderSettingsContext";
 import { useTTS } from "@/contexts/TTSContext";
+import { useChapterSync, useChapterNavigation } from "@/hooks";
 import ReaderSettingsSidebar from "@/components/ReaderSettingsSidebar";
 import TTSPlayer from "@/components/TTSPlayer";
+import {
+  ReaderTopBar,
+  ReaderNavigation,
+  ChapterHeader,
+  ChapterContent,
+} from "@/components/Reader";
 
 const ReaderPage: React.FC = () => {
-  const { book_id, chapter } = useParams<{
+  const { book_id } = useParams<{
     book_id: string;
-    chapter?: string;
   }>();
-  const navigate = useNavigate();
   const [novel, setNovel] = useState<Novel | null>(null);
   const [chapters, setChapters] = useState<Chapter[]>([]);
   const [currentChapterIndex, setCurrentChapterIndex] = useState(0);
   const [loading, setLoading] = useState(true);
 
-  // Get settings from context (only what we need for rendering)
+  // Get settings from context
   const {
     selectedFont,
     fontSize,
@@ -48,57 +53,27 @@ const ReaderPage: React.FC = () => {
     }
   }, [tts.currentParagraphIndex, tts.isPlaying]);
 
-  // Ref to skip sync-back when the chapter change initiated from the URL
-  const isUpdatingFromUrl = React.useRef(false);
-  const progressTimeoutRef = React.useRef<ReturnType<typeof setTimeout> | null>(
-    null,
-  );
+  // Use custom hooks for chapter sync and navigation
+  useChapterSync({
+    currentChapterIndex,
+    setCurrentChapterIndex,
+    chapters,
+    bookId: book_id || "",
+  });
+
+  const { handlePrevious, handleNext, handleTTS, hasPrevious, hasNext } =
+    useChapterNavigation({
+      currentChapterIndex,
+      setCurrentChapterIndex,
+      totalChapters: chapters.length,
+      currentChapter: chapters[currentChapterIndex] || null,
+    });
 
   useEffect(() => {
     if (book_id) {
       loadNovelAndChapters();
     }
   }, [book_id]);
-
-  // Sync state with URL chapter parameter (handles TOC clicks and back/forward navigation)
-  useEffect(() => {
-    if (chapter && chapters.length > 0) {
-      const chapterNumber = parseInt(chapter);
-      const newIndex = chapterNumber - 1;
-      if (
-        newIndex >= 0 &&
-        newIndex < chapters.length &&
-        newIndex !== currentChapterIndex
-      ) {
-        isUpdatingFromUrl.current = true;
-        setCurrentChapterIndex(newIndex);
-        window.scrollTo(0, 0);
-      }
-    }
-  }, [chapter, chapters.length]);
-
-  useEffect(() => {
-    if (book_id && chapters.length > 0) {
-      const chapterNumber = currentChapterIndex + 1;
-      const chapterStr = chapterNumber.toString();
-
-      // If we just synced from a URL change, don't trigger a navigation update
-      // But we still want to finish the sync cycle
-      if (isUpdatingFromUrl.current) {
-        if (chapter === chapterStr) {
-          isUpdatingFromUrl.current = false;
-        }
-        updateReadProgress();
-        return;
-      }
-
-      // If URL doesn't match current state (e.g. manual button click), update URL
-      if (chapter !== chapterStr) {
-        navigate(`/read/${book_id}/${chapterStr}`, { replace: true });
-      }
-      updateReadProgress();
-    }
-  }, [currentChapterIndex, book_id, chapters.length, navigate]);
 
   const loadNovelAndChapters = async () => {
     try {
@@ -112,8 +87,11 @@ const ReaderPage: React.FC = () => {
 
       let initialChapterIndex = 0;
 
-      if (chapter) {
-        initialChapterIndex = parseInt(chapter) - 1;
+      // Get chapter from URL params
+      const chapterParam = window.location.pathname.split("/").pop();
+
+      if (chapterParam && !isNaN(parseInt(chapterParam))) {
+        initialChapterIndex = parseInt(chapterParam) - 1;
       } else if (novelResponse.data.last_read_chapter > 0) {
         initialChapterIndex = novelResponse.data.last_read_chapter - 1;
       }
@@ -133,51 +111,7 @@ const ReaderPage: React.FC = () => {
     }
   };
 
-  const updateReadProgress = () => {
-    if (progressTimeoutRef.current) {
-      clearTimeout(progressTimeoutRef.current);
-    }
-
-    progressTimeoutRef.current = setTimeout(async () => {
-      try {
-        await novelApi.updateMetadata(book_id!, {
-          last_read_chapter: currentChapterIndex + 1,
-          last_accessed_at: new Date().toISOString(),
-        });
-      } catch (error) {
-        console.error("Failed to update read progress:", error);
-      }
-    }, 1000); // 1 second debounce
-  };
-
   const currentChapter = chapters[currentChapterIndex];
-
-  const handlePrevious = () => {
-    if (currentChapterIndex > 0) {
-      setCurrentChapterIndex(currentChapterIndex - 1);
-      window.scrollTo(0, 0);
-    }
-  };
-
-  const handleNext = () => {
-    if (currentChapterIndex < chapters.length - 1) {
-      setCurrentChapterIndex(currentChapterIndex + 1);
-      window.scrollTo(0, 0);
-    }
-  };
-
-  const handleTTS = () => {
-    if (currentChapter) {
-      // Parse chapter content into paragraphs
-      const paragraphs = currentChapter.content
-        .split("\n\n")
-        .map((p) => p.trim())
-        .filter((p) => p.length > 0);
-
-      // Start TTS from the beginning
-      tts.speak(paragraphs, 0);
-    }
-  };
 
   if (loading) {
     return (
@@ -221,13 +155,12 @@ const ReaderPage: React.FC = () => {
           onTTS={handleTTS}
           onPrev={handlePrevious}
           onNext={handleNext}
-          hasPrev={currentChapterIndex > 0}
-          hasNext={currentChapterIndex < chapters.length - 1}
+          hasPrev={hasPrevious}
+          hasNext={hasNext}
           bookId={book_id || ""}
         />
 
         {/* Main Content */}
-        {/* ... (keep className same) */}
         <div
           className={`flex-1 transition-all duration-300 ${
             sidebarOpen && !isDetached ? "ml-80" : "ml-0"
@@ -238,126 +171,37 @@ const ReaderPage: React.FC = () => {
               isFullscreen ? "max-w-full p-2" : "max-w-4xl p-2"
             }`}
           >
-            {/* Top Bar */}
-            <div className="mb-4 flex items-center justify-between">
-              <div className="flex items-center gap-6">
-                <button
-                  onClick={() => navigate("/")}
-                  className="text-slate-400 hover:text-white flex items-center gap-2 transition-colors"
-                >
-                  📚 Library
-                </button>
-                <button
-                  onClick={() => navigate(`/book/${book_id}`)}
-                  className="text-slate-400 hover:text-white flex items-center gap-2 transition-colors"
-                >
-                  <BookOpen className="w-4 h-4" />
-                  Description
-                </button>
-              </div>
-            </div>
+            <ReaderTopBar bookId={book_id || ""} />
 
-            {/* Top Navigation */}
-            <div className="flex justify-between items-center my-3">
-              <button
-                onClick={handlePrevious}
-                disabled={currentChapterIndex === 0}
-                className="px-4 py-2 bg-slate-800/50 hover:bg-slate-700/50 text-slate-300 rounded-lg disabled:opacity-50 disabled:cursor-not-allowed transition-colors border border-slate-700/50 flex items-center gap-2"
-              >
-                <ChevronLeft className="w-4 h-4" />
-                Previous
-              </button>
-              <div className="flex items-center gap-4">
-                <button
-                  onClick={() => setSidebarOpen(!sidebarOpen)}
-                  className="p-2 bg-slate-800/50 hover:bg-slate-700/50 rounded-lg transition-colors border border-slate-700/50"
-                >
-                  <Settings className="w-5 h-5 text-slate-300" />
-                </button>
-                <button
-                  onClick={handleNext}
-                  disabled={currentChapterIndex === chapters.length - 1}
-                  className="px-4 py-2 bg-slate-800/50 hover:bg-slate-700/50 text-slate-300 rounded-lg disabled:opacity-50 disabled:cursor-not-allowed transition-colors border border-slate-700/50 flex items-center gap-2"
-                >
-                  Next
-                  <ChevronRight className="w-4 h-4" />
-                </button>
-              </div>
-            </div>
+            <ReaderNavigation
+              onPrevious={handlePrevious}
+              onNext={handleNext}
+              onToggleSidebar={() => setSidebarOpen(!sidebarOpen)}
+              hasPrevious={hasPrevious}
+              hasNext={hasNext}
+              // sidebarOpen={sidebarOpen}
+            />
 
-            <div
-              className="rounded-2xl p-8 shadow-xl border border-slate-700/50"
-              style={{ background: contentBgColor }}
-            >
-              {/* Chapter Header */}
-              <div className="mb-6">
-                <h1 className="text-3xl font-bold mb-2 text-white">
-                  {currentChapter.title}
-                </h1>
-                <div className="flex items-center gap-4 text-slate-400">
-                  <p>
-                    Chapter {currentChapterIndex + 1} of {chapters.length}
-                  </p>
-                  <span className="text-xs px-2 py-1 rounded-full bg-blue-500/20 text-blue-400 border border-blue-500/30">
-                    Progress Saved
-                  </span>
-                  {novel?.title && (
-                    <p className="text-sm text-slate-500">({novel.title})</p>
-                  )}
-                </div>
-              </div>
+            <ChapterHeader
+              title={currentChapter.title}
+              currentIndex={currentChapterIndex + 1}
+              totalChapters={chapters.length}
+              novelTitle={novel?.title}
+            />
 
-              {/* Chapter Content */}
-              <div className="prose prose-invert max-w-none mb-8">
-                <div
-                  className="leading-relaxed"
-                  style={{
-                    fontFamily: selectedFont.family,
-                    color: textColor,
-                    fontSize: `${fontSize}px`,
-                  }}
-                >
-                  {currentChapter.content
-                    .split("\n\n")
-                    .map((paragraph) => paragraph.trim())
-                    .filter((paragraph) => paragraph.length > 0)
-                    .map((paragraph, idx) => (
-                      <p
-                        key={idx}
-                        data-paragraph-index={idx}
-                        className={`mb-4 transition-all duration-300 rounded-lg ${
-                          tts.isPlaying && tts.currentParagraphIndex === idx
-                            ? "bg-purple-600/20 px-4 py-2 border-l-4 border-purple-500"
-                            : ""
-                        }`}
-                      >
-                        {paragraph}
-                      </p>
-                    ))}
-                </div>
-              </div>
-
-              {/* Navigation Controls */}
-              <div className="flex gap-4 justify-between items-center border-t border-slate-700 pt-6">
-                <button
-                  onClick={handlePrevious}
-                  disabled={currentChapterIndex === 0}
-                  className="px-6 py-3 bg-gradient-to-r from-purple-500 to-purple-600 text-white rounded-xl hover:from-purple-600 hover:to-purple-700 disabled:from-slate-700 disabled:to-slate-700 disabled:text-slate-500 disabled:cursor-not-allowed transition-all font-semibold shadow-lg"
-                >
-                  ← Previous
-                </button>
-
-                {/* TTS Button moved to settings */}
-
-                <button
-                  onClick={handleNext}
-                  disabled={currentChapterIndex === chapters.length - 1}
-                  className="px-6 py-3 bg-gradient-to-r from-purple-500 to-purple-600 text-white rounded-xl hover:from-purple-600 hover:to-purple-700 disabled:from-slate-700 disabled:to-slate-700 disabled:text-slate-500 disabled:cursor-not-allowed transition-all font-semibold shadow-lg"
-                >
-                  Next →
-                </button>
-              </div>
-            </div>
+            <ChapterContent
+              content={currentChapter.content}
+              fontFamily={selectedFont.family}
+              fontSize={fontSize}
+              textColor={textColor}
+              backgroundColor={contentBgColor}
+              ttsPlaying={tts.isPlaying}
+              ttsCurrentParagraph={tts.currentParagraphIndex}
+              onPrevious={handlePrevious}
+              onNext={handleNext}
+              hasPrevious={hasPrevious}
+              hasNext={hasNext}
+            />
           </div>
         </div>
       </div>

@@ -2,3 +2,7 @@ export { useLocalStorage } from "@/hooks/useLocalStorage";
 export { useLibraryData } from "@/hooks/useLibraryData";
 export { useNovelSelection } from "@/hooks/useNovelSelection";
 export { useNovelSort } from "@/hooks/useNovelSort";
+export { useChapterSync } from "@/hooks/useChapterSync";
+export { useChapterNavigation } from "@/hooks/useChapterNavigation";
+export { useChapterParsing } from "@/hooks/useChapterParsing";
+export { useBookDescription } from "@/hooks/useBookDescription";
