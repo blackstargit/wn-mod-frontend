@@ -74,14 +74,28 @@ export const TTSProvider: React.FC<{ children: React.ReactNode }> = ({
             if (voice) {
               setSelectedVoice(voice);
             } else {
-              // Fallback to first English voice or first voice
-              const englishVoice = voices.find((v) => v.lang.startsWith("en"));
-              setSelectedVoice(englishVoice || voices[0]);
+              // Fallback to offline English voice, then any offline voice, then any voice
+              const offlineVoices = voices.filter(
+                (v) => !v.name.toLowerCase().includes("google"),
+              );
+              const offlineEnglishVoice = offlineVoices.find((v) =>
+                v.lang.startsWith("en"),
+              );
+              setSelectedVoice(
+                offlineEnglishVoice || offlineVoices[0] || voices[0],
+              );
             }
           } else {
-            // Default to first English voice or first voice
-            const englishVoice = voices.find((v) => v.lang.startsWith("en"));
-            setSelectedVoice(englishVoice || voices[0]);
+            // Default to offline English voice, then any offline voice, then any voice
+            const offlineVoices = voices.filter(
+              (v) => !v.name.toLowerCase().includes("google"),
+            );
+            const offlineEnglishVoice = offlineVoices.find((v) =>
+              v.lang.startsWith("en"),
+            );
+            setSelectedVoice(
+              offlineEnglishVoice || offlineVoices[0] || voices[0],
+            );
           }
 
           resolve();

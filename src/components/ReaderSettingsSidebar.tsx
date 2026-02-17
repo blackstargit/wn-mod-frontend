@@ -565,15 +565,50 @@ const ReaderSettingsSidebar: React.FC<ReaderSettingsSidebarProps> = ({
                   {tts.availableVoices.length === 0 && (
                     <option>Loading voices...</option>
                   )}
-                  {tts.availableVoices.map((voice) => (
-                    <option key={voice.name} value={voice.name}>
-                      {voice.name} ({voice.lang})
-                    </option>
-                  ))}
+
+                  {/* Offline Voices */}
+                  {tts.availableVoices.filter(
+                    (v) => !v.name.toLowerCase().includes("google"),
+                  ).length > 0 && (
+                    <optgroup label="🔒 Offline Voices (Work without internet)">
+                      {tts.availableVoices
+                        .filter((v) => !v.name.toLowerCase().includes("google"))
+                        .map((voice) => (
+                          <option key={voice.name} value={voice.name}>
+                            {voice.name} ({voice.lang})
+                          </option>
+                        ))}
+                    </optgroup>
+                  )}
+
+                  {/* Online Voices */}
+                  {tts.availableVoices.filter((v) =>
+                    v.name.toLowerCase().includes("google"),
+                  ).length > 0 && (
+                    <optgroup label="🌐 Online Voices (Require internet)">
+                      {tts.availableVoices
+                        .filter((v) => v.name.toLowerCase().includes("google"))
+                        .map((voice) => (
+                          <option key={voice.name} value={voice.name}>
+                            {voice.name} ({voice.lang})
+                          </option>
+                        ))}
+                    </optgroup>
+                  )}
                 </select>
                 <p className="mt-2 text-xs text-slate-400">
-                  {tts.availableVoices.length} voice
-                  {tts.availableVoices.length !== 1 ? "s" : ""} available
+                  {
+                    tts.availableVoices.filter(
+                      (v) => !v.name.toLowerCase().includes("google"),
+                    ).length
+                  }{" "}
+                  offline,{" "}
+                  {
+                    tts.availableVoices.filter((v) =>
+                      v.name.toLowerCase().includes("google"),
+                    ).length
+                  }{" "}
+                  online
                 </p>
               </div>
 
