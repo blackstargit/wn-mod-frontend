@@ -1,22 +1,18 @@
-import React, { useState, useEffect } from "react";
+import React, { useState } from "react";
 import {
-  Settings,
-  X,
   Search,
   Star,
   StarOff,
   Maximize,
   Minimize,
-  Pin,
-  PinOff,
   Sun,
   Volume2,
-  ChevronLeft,
-  ChevronRight,
+  Settings,
   BookOpen,
   Mic,
   List,
   ChevronDown,
+  ChevronRight,
 } from "lucide-react";
 import {
   useReaderSettings,
@@ -24,6 +20,13 @@ import {
 } from "@/contexts/ReaderSettingsContext";
 import { useTTS } from "@/contexts/TTSContext";
 import { Link } from "react-router-dom";
+import { useTabPersistence, useTOCData, useChapterParsing } from "@/hooks";
+import {
+  SidebarHeader,
+  TabNavigation,
+  NavigationControls,
+} from "@/components/ReaderSettings";
+import type { TabType } from "@/types/readerSettings";
 
 interface ReaderSettingsSidebarProps {
   onTTS: () => void;
@@ -31,10 +34,8 @@ interface ReaderSettingsSidebarProps {
   onNext: () => void;
   hasPrev: boolean;
   hasNext: boolean;
-  bookId: string; // Added for fetching TOC
+  bookId: string;
 }
-
-type TabType = "general" | "reading" | "tts" | "toc";
 
 const ReaderSettingsSidebar: React.FC<ReaderSettingsSidebarProps> = ({
   onTTS,
@@ -46,15 +47,12 @@ const ReaderSettingsSidebar: React.FC<ReaderSettingsSidebarProps> = ({
 }) => {
   const [fontSearch, setFontSearch] = useState("");
   const [fontDropdownOpen, setFontDropdownOpen] = useState(false);
-  const [activeTab, setActiveTab] = useState<TabType>(() => {
-    const saved = localStorage.getItem("readerSettingsActiveTab");
-    return (saved as TabType) || "general";
-  });
-  const [tocData, setTocData] = useState<any>(null);
-  const [tocLoading, setTocLoading] = useState(false);
-  const [expandedVolumes, setExpandedVolumes] = useState<
-    Record<number, boolean>
-  >({});
+
+  // Use custom hooks
+  const { activeTab, setActiveTab } = useTabPersistence();
+  const { tocData, tocLoading, expandedVolumes, setExpandedVolumes } =
+    useTOCData(bookId);
+  const { parseChapterTitle } = useChapterParsing();
 
   const {
     selectedFont,
@@ -91,41 +89,7 @@ const ReaderSettingsSidebar: React.FC<ReaderSettingsSidebarProps> = ({
     favoriteFonts.includes(font.name),
   );
 
-  // Fetch TOC data
-  useEffect(() => {
-    const fetchTOC = async () => {
-      if (!bookId) return;
-
-      setTocLoading(true);
-      try {
-        const { novelApi } = await import("@/api/client");
-        const response = await novelApi.getNovelDescription(bookId);
-
-        // Handle API response wrapper { status: string, data: NovelDescription }
-        if (
-          response.data &&
-          response.data.status === "ready" &&
-          response.data.data
-        ) {
-          setTocData(response.data.data);
-        } else {
-          // Fallback or handle not ready state
-          console.log("TOC data not ready or invalid format:", response.data);
-        }
-      } catch (error) {
-        console.error("Failed to fetch TOC:", error);
-      } finally {
-        setTocLoading(false);
-      }
-    };
-
-    fetchTOC();
-  }, [bookId]);
-
-  // Persist active tab
-  useEffect(() => {
-    localStorage.setItem("readerSettingsActiveTab", activeTab);
-  }, [activeTab]);
+  // TOC data and tab persistence now handled by custom hooks
 
   const tabs = [
     { id: "general" as TabType, label: "", icon: Settings },
@@ -141,83 +105,29 @@ const ReaderSettingsSidebar: React.FC<ReaderSettingsSidebarProps> = ({
       } overflow-hidden`}
     >
       <div className="p-6 h-full flex flex-col">
-        {/* Sidebar Header */}
-        <div className="flex items-center justify-between mb-4">
-          <h2 className="text-xl font-bold text-white flex items-center gap-2">
-            <Settings className="w-5 h-5" />
-            Reader Settings
-          </h2>
-          <div className="flex items-center gap-2">
-            <button
-              onClick={toggleDetached}
-              className="p-2 hover:bg-slate-700/50 rounded-lg transition-colors"
-              title={isDetached ? "Attach sidebar" : "Detach sidebar"}
-            >
-              {isDetached ? (
-                <Pin className="w-4 h-4 text-purple-400" />
-              ) : (
-                <PinOff className="w-4 h-4 text-slate-400" />
-              )}
-            </button>
-            <button
-              onClick={() => setSidebarOpen(false)}
-              className="p-2 hover:bg-slate-700/50 rounded-lg transition-colors"
-            >
-              <X className="w-5 h-5 text-slate-400" />
-            </button>
-          </div>
-        </div>
+        <SidebarHeader
+          isDetached={isDetached}
+          onToggleDetached={toggleDetached}
+          onClose={() => setSidebarOpen(false)}
+        />
 
-        {/* Tabs */}
-        <div className="flex gap-2 mb-4 border-b border-slate-700/50 pb-2">
-          {tabs.map((tab) => {
-            const Icon = tab.icon;
-            return (
-              <button
-                key={tab.id}
-                onClick={() => setActiveTab(tab.id)}
-                className={`flex-1 flex items-center justify-center gap-2 px-3 py-2 rounded-lg transition-all ${
-                  activeTab === tab.id
-                    ? "bg-purple-600/20 text-purple-400 border border-purple-500/50"
-                    : "text-slate-400 hover:text-white hover:bg-slate-700/30"
-                }`}
-              >
-                <Icon className="w-4 h-4" />
-                <span className="text-sm font-medium">{tab.label}</span>
-              </button>
-            );
-          })}
-        </div>
+        <TabNavigation
+          tabs={tabs}
+          activeTab={activeTab}
+          onTabChange={setActiveTab}
+        />
 
         {/* Scrollable Content */}
         <div className="flex-1 overflow-y-auto pr-2">
           {/* General Tab */}
           {activeTab === "general" && (
             <div className="space-y-6">
-              {/* Navigation Controls */}
-              <div>
-                <h3 className="text-sm font-semibold text-slate-300 mb-3">
-                  Navigation
-                </h3>
-                <div className="grid grid-cols-2 gap-2">
-                  <button
-                    onClick={onPrev}
-                    disabled={!hasPrev}
-                    className="col-span-1 flex items-center justify-center gap-2 p-3 bg-slate-700/50 hover:bg-slate-600/50 disabled:opacity-50 disabled:cursor-not-allowed rounded-lg text-white transition-colors"
-                  >
-                    <ChevronLeft className="w-4 h-4" />
-                    Prev
-                  </button>
-                  <button
-                    onClick={onNext}
-                    disabled={!hasNext}
-                    className="col-span-1 flex items-center justify-center gap-2 p-3 bg-slate-700/50 hover:bg-slate-600/50 disabled:opacity-50 disabled:cursor-not-allowed rounded-lg text-white transition-colors"
-                  >
-                    Next
-                    <ChevronRight className="w-4 h-4" />
-                  </button>
-                </div>
-              </div>
+              <NavigationControls
+                onPrev={onPrev}
+                onNext={onNext}
+                hasPrev={hasPrev}
+                hasNext={hasNext}
+              />
 
               {/* Brightness */}
               <div>

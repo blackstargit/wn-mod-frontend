@@ -64,7 +64,8 @@ export function useChapterSync({
       }
       updateReadProgress();
     }
-  }, [currentChapterIndex, bookId, chapters.length, navigate, chapter]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [currentChapterIndex, bookId, chapters.length, navigate]);
 
   const updateReadProgress = () => {
     if (progressTimeoutRef.current) {
