@@ -33,6 +33,21 @@ const ReaderPage: React.FC = () => {
 
   const tts = useTTS();
 
+  // Auto-scroll to current TTS paragraph
+  useEffect(() => {
+    if (tts.isPlaying && tts.currentParagraphIndex >= 0) {
+      const paragraphElement = document.querySelector(
+        `[data-paragraph-index="${tts.currentParagraphIndex}"]`,
+      );
+      if (paragraphElement) {
+        paragraphElement.scrollIntoView({
+          behavior: "smooth",
+          block: "center",
+        });
+      }
+    }
+  }, [tts.currentParagraphIndex, tts.isPlaying]);
+
   useEffect(() => {
     if (book_id) {
       loadNovelAndChapters();
@@ -259,8 +274,18 @@ const ReaderPage: React.FC = () => {
                 >
                   {currentChapter.content
                     .split("\n\n")
+                    .map((paragraph) => paragraph.trim())
+                    .filter((paragraph) => paragraph.length > 0)
                     .map((paragraph, idx) => (
-                      <p key={idx} className="mb-4">
+                      <p
+                        key={idx}
+                        data-paragraph-index={idx}
+                        className={`mb-4 transition-all duration-300 rounded-lg ${
+                          tts.isPlaying && tts.currentParagraphIndex === idx
+                            ? "bg-purple-600/20 px-4 py-2 border-l-4 border-purple-500"
+                            : ""
+                        }`}
+                      >
                         {paragraph}
                       </p>
                     ))}
