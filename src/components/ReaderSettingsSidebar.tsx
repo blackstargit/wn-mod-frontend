@@ -15,6 +15,8 @@ import {
   ChevronRight,
   BookOpen,
   Mic,
+  List,
+  ChevronDown,
 } from "lucide-react";
 import {
   useReaderSettings,
@@ -28,9 +30,10 @@ interface ReaderSettingsSidebarProps {
   onNext: () => void;
   hasPrev: boolean;
   hasNext: boolean;
+  bookId: string; // Added for fetching TOC
 }
 
-type TabType = "general" | "reading" | "tts";
+type TabType = "general" | "reading" | "tts" | "toc";
 
 const ReaderSettingsSidebar: React.FC<ReaderSettingsSidebarProps> = ({
   onTTS,
@@ -38,6 +41,7 @@ const ReaderSettingsSidebar: React.FC<ReaderSettingsSidebarProps> = ({
   onNext,
   hasPrev,
   hasNext,
+  bookId,
 }) => {
   const [fontSearch, setFontSearch] = useState("");
   const [fontDropdownOpen, setFontDropdownOpen] = useState(false);
@@ -45,6 +49,11 @@ const ReaderSettingsSidebar: React.FC<ReaderSettingsSidebarProps> = ({
     const saved = localStorage.getItem("readerSettingsActiveTab");
     return (saved as TabType) || "general";
   });
+  const [tocData, setTocData] = useState<any>(null);
+  const [tocLoading, setTocLoading] = useState(false);
+  const [expandedVolumes, setExpandedVolumes] = useState<
+    Record<number, boolean>
+  >({});
 
   const {
     selectedFont,
@@ -81,15 +90,47 @@ const ReaderSettingsSidebar: React.FC<ReaderSettingsSidebarProps> = ({
     favoriteFonts.includes(font.name),
   );
 
+  // Fetch TOC data
+  useEffect(() => {
+    const fetchTOC = async () => {
+      if (!bookId) return;
+
+      setTocLoading(true);
+      try {
+        const { novelApi } = await import("@/api/client");
+        const response = await novelApi.getNovelDescription(bookId);
+
+        // Handle API response wrapper { status: string, data: NovelDescription }
+        if (
+          response.data &&
+          response.data.status === "ready" &&
+          response.data.data
+        ) {
+          setTocData(response.data.data);
+        } else {
+          // Fallback or handle not ready state
+          console.log("TOC data not ready or invalid format:", response.data);
+        }
+      } catch (error) {
+        console.error("Failed to fetch TOC:", error);
+      } finally {
+        setTocLoading(false);
+      }
+    };
+
+    fetchTOC();
+  }, [bookId]);
+
   // Persist active tab
   useEffect(() => {
     localStorage.setItem("readerSettingsActiveTab", activeTab);
   }, [activeTab]);
 
   const tabs = [
-    { id: "general" as TabType, label: "General", icon: Settings },
-    { id: "reading" as TabType, label: "Reading", icon: BookOpen },
-    { id: "tts" as TabType, label: "TTS", icon: Mic },
+    { id: "general" as TabType, label: "", icon: Settings },
+    { id: "reading" as TabType, label: "", icon: BookOpen },
+    { id: "tts" as TabType, label: "", icon: Mic },
+    { id: "toc" as TabType, label: "", icon: List },
   ];
 
   return (
@@ -665,6 +706,121 @@ const ReaderSettingsSidebar: React.FC<ReaderSettingsSidebarProps> = ({
                   Click to start reading the current chapter aloud using your
                   browser's text-to-speech engine.
                 </p>
+              </div>
+            </div>
+          )}
+
+          {/* TOC Tab */}
+          {activeTab === "toc" && (
+            <div className="space-y-6">
+              <div>
+                <h3 className="text-sm font-semibold text-slate-300 mb-3">
+                  Table of Contents
+                </h3>
+
+                {tocLoading && (
+                  <div className="text-center text-slate-400 py-8">
+                    Loading table of contents...
+                  </div>
+                )}
+
+                {!tocLoading && !tocData && (
+                  <div className="text-center text-slate-400 py-8">
+                    No table of contents available
+                  </div>
+                )}
+
+                {!tocLoading && tocData && tocData.toc && (
+                  <div className="space-y-3">
+                    {tocData.toc.map((volume: any, volumeIndex: number) => {
+                      // Helper to parse chapter title (same as BookDescriptionPage)
+                      const parseChapterTitle = (rawTitle: string) => {
+                        const indexMatch = rawTitle.match(/^(\d+)\s+/);
+                        if (!indexMatch)
+                          return { index: "", title: rawTitle, date: "" };
+
+                        const index = indexMatch[1];
+                        let rest = rawTitle.substring(indexMatch[0].length);
+
+                        const dateMatch = rest.match(
+                          /\s+(\d+\s+[a-zA-Z]+\s+ago|just now|yesterday|today)$/i,
+                        );
+
+                        let date = "";
+                        let title = rest;
+
+                        if (dateMatch) {
+                          date = dateMatch[1];
+                          title = rest
+                            .substring(0, rest.length - dateMatch[0].length)
+                            .trim();
+                        }
+
+                        return { index, title, date };
+                      };
+
+                      return (
+                        <div
+                          key={volumeIndex}
+                          className="border border-slate-700/30 rounded-lg overflow-hidden"
+                        >
+                          <button
+                            onClick={() => {
+                              setExpandedVolumes((prev) => ({
+                                ...prev,
+                                [volumeIndex]: !prev[volumeIndex],
+                              }));
+                            }}
+                            className="w-full flex items-center justify-between p-3 bg-slate-800/80 hover:bg-slate-700/80 transition-colors"
+                          >
+                            <h4 className="font-semibold text-purple-400 text-sm">
+                              {volume.volume}
+                            </h4>
+                            {expandedVolumes[volumeIndex] ? (
+                              <ChevronDown className="w-4 h-4 text-slate-400" />
+                            ) : (
+                              <ChevronRight className="w-4 h-4 text-slate-400" />
+                            )}
+                          </button>
+
+                          {expandedVolumes[volumeIndex] && (
+                            <div className="p-2 space-y-1 bg-slate-900/40 max-h-full overflow-y-auto">
+                              {volume.chapters.map(
+                                (chapter: any, chapterIndex: number) => {
+                                  const { index, title } = parseChapterTitle(
+                                    chapter.title,
+                                  );
+                                  return (
+                                    <a
+                                      key={chapterIndex}
+                                      href={chapter.url}
+                                      target="_blank"
+                                      rel="noopener noreferrer"
+                                      className={`flex items-center gap-2 p-2 rounded-lg transition-all text-xs group ${
+                                        chapter.is_locked
+                                          ? "bg-slate-900/30 text-slate-500 cursor-not-allowed"
+                                          : "bg-slate-900/30 hover:bg-slate-800/50 text-slate-300 hover:text-white border border-slate-700/30 hover:border-purple-500/50"
+                                      }`}
+                                    >
+                                      {index && (
+                                        <span className="text-slate-500 font-mono text-xs min-w-[2rem]">
+                                          {index}
+                                        </span>
+                                      )}
+                                      <span className="truncate flex-1">
+                                        {title || chapter.title}
+                                      </span>
+                                    </a>
+                                  );
+                                },
+                              )}
+                            </div>
+                          )}
+                        </div>
+                      );
+                    })}
+                  </div>
+                )}
               </div>
             </div>
           )}

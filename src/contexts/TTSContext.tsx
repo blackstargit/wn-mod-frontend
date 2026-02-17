@@ -145,7 +145,6 @@ export const TTSProvider: React.FC<{ children: React.ReactNode }> = ({
       setIsPaused(false);
 
       // Cancel any ongoing speech
-      console.log("[TTS] Canceling previous speech...");
       window.speechSynthesis.cancel();
 
       // Wait for cancel to complete
@@ -154,15 +153,6 @@ export const TTSProvider: React.FC<{ children: React.ReactNode }> = ({
         // Online voices have localService = false (they require internet)
         // Offline voices have localService = true (built into OS)
         const isOnlineVoice = selectedVoice.localService === false;
-
-        // Debug logging
-        console.log("[TTS] Voice properties:", {
-          name: selectedVoice.name,
-          lang: selectedVoice.lang,
-          localService: selectedVoice.localService,
-          voiceURI: selectedVoice.voiceURI,
-          isOnlineVoice: isOnlineVoice,
-        });
 
         // Online voices: use smaller chunks (5 paragraphs max)
         // Offline voices: use entire chapter for zero lag
@@ -177,17 +167,6 @@ export const TTSProvider: React.FC<{ children: React.ReactNode }> = ({
           .slice(startIndex, endIndex)
           .join("\n\n");
 
-        console.log(
-          `[TTS] Speaking ${isOnlineVoice ? "chunk" : "entire chapter"} from paragraph ${startIndex + 1} to ${endIndex}, length: ${textToSpeak.length} chars`,
-        );
-        console.log(
-          "[TTS] Selected voice:",
-          selectedVoice.name,
-          selectedVoice.lang,
-          isOnlineVoice ? "(online)" : "(offline)",
-        );
-        console.log("[TTS] Playback rate:", playbackRate);
-
         const utterance = new SpeechSynthesisUtterance(textToSpeak);
         utterance.voice = selectedVoice;
         utterance.rate = playbackRate;
@@ -198,15 +177,11 @@ export const TTSProvider: React.FC<{ children: React.ReactNode }> = ({
 
         utterance.onstart = () => {
           hasStarted = true;
-          console.log(`[TTS] ✅ Started continuous speech`);
         };
 
         utterance.onend = () => {
-          console.log(`[TTS] Finished speech chunk`);
-
           // If there are more paragraphs, continue automatically
           if (endIndex < paragraphsRef.current.length) {
-            console.log(`[TTS] Auto-continuing to paragraph ${endIndex + 1}`);
             speakFromIndex(endIndex);
           } else {
             // Finished all paragraphs
@@ -221,7 +196,6 @@ export const TTSProvider: React.FC<{ children: React.ReactNode }> = ({
 
           // Ignore "interrupted" errors - these happen when clicking Next/Prev
           if (event.error === "interrupted") {
-            console.log("[TTS] Interrupted (expected when navigating)");
             return;
           }
 
@@ -241,8 +215,6 @@ export const TTSProvider: React.FC<{ children: React.ReactNode }> = ({
         };
 
         utteranceRef.current = utterance;
-
-        console.log("[TTS] Calling speechSynthesis.speak()...");
         window.speechSynthesis.speak(utterance);
 
         // Detect if voice fails to start (common with online voices)

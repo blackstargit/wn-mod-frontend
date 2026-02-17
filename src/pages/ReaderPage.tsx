@@ -179,6 +179,7 @@ const ReaderPage: React.FC = () => {
           onNext={handleNext}
           hasPrev={currentChapterIndex > 0}
           hasNext={currentChapterIndex < chapters.length - 1}
+          bookId={book_id || ""}
         />
 
         {/* Main Content */}
