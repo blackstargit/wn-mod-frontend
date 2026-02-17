@@ -48,16 +48,54 @@ const ReaderPage: React.FC = () => {
     }
   }, [tts.currentParagraphIndex, tts.isPlaying]);
 
+  // Ref to skip sync-back when the chapter change initiated from the URL
+  const isUpdatingFromUrl = React.useRef(false);
+  const progressTimeoutRef = React.useRef<ReturnType<typeof setTimeout> | null>(
+    null,
+  );
+
   useEffect(() => {
     if (book_id) {
       loadNovelAndChapters();
     }
   }, [book_id]);
 
+  // Sync state with URL chapter parameter (handles TOC clicks and back/forward navigation)
+  useEffect(() => {
+    if (chapter && chapters.length > 0) {
+      const chapterNumber = parseInt(chapter);
+      const newIndex = chapterNumber - 1;
+      if (
+        newIndex >= 0 &&
+        newIndex < chapters.length &&
+        newIndex !== currentChapterIndex
+      ) {
+        isUpdatingFromUrl.current = true;
+        setCurrentChapterIndex(newIndex);
+        window.scrollTo(0, 0);
+      }
+    }
+  }, [chapter, chapters.length]);
+
   useEffect(() => {
     if (book_id && chapters.length > 0) {
       const chapterNumber = currentChapterIndex + 1;
-      navigate(`/read/${book_id}/${chapterNumber}`, { replace: true });
+      const chapterStr = chapterNumber.toString();
+
+      // If we just synced from a URL change, don't trigger a navigation update
+      // But we still want to finish the sync cycle
+      if (isUpdatingFromUrl.current) {
+        if (chapter === chapterStr) {
+          isUpdatingFromUrl.current = false;
+        }
+        updateReadProgress();
+        return;
+      }
+
+      // If URL doesn't match current state (e.g. manual button click), update URL
+      if (chapter !== chapterStr) {
+        navigate(`/read/${book_id}/${chapterStr}`, { replace: true });
+      }
       updateReadProgress();
     }
   }, [currentChapterIndex, book_id, chapters.length, navigate]);
@@ -95,15 +133,21 @@ const ReaderPage: React.FC = () => {
     }
   };
 
-  const updateReadProgress = async () => {
-    try {
-      await novelApi.updateMetadata(book_id!, {
-        last_read_chapter: currentChapterIndex + 1,
-        last_accessed_at: new Date().toISOString(),
-      });
-    } catch (error) {
-      console.error("Failed to update read progress:", error);
+  const updateReadProgress = () => {
+    if (progressTimeoutRef.current) {
+      clearTimeout(progressTimeoutRef.current);
     }
+
+    progressTimeoutRef.current = setTimeout(async () => {
+      try {
+        await novelApi.updateMetadata(book_id!, {
+          last_read_chapter: currentChapterIndex + 1,
+          last_accessed_at: new Date().toISOString(),
+        });
+      } catch (error) {
+        console.error("Failed to update read progress:", error);
+      }
+    }, 1000); // 1 second debounce
   };
 
   const currentChapter = chapters[currentChapterIndex];

@@ -23,6 +23,7 @@ import {
   FONT_LIBRARY,
 } from "@/contexts/ReaderSettingsContext";
 import { useTTS } from "@/contexts/TTSContext";
+import { Link } from "react-router-dom";
 
 interface ReaderSettingsSidebarProps {
   onTTS: () => void;
@@ -791,11 +792,10 @@ const ReaderSettingsSidebar: React.FC<ReaderSettingsSidebarProps> = ({
                                     chapter.title,
                                   );
                                   return (
-                                    <a
+                                    <Link
                                       key={chapterIndex}
-                                      href={chapter.url}
-                                      target="_blank"
-                                      rel="noopener noreferrer"
+                                      to={`/read/${bookId}/${index}`}
+                                      title={title}
                                       className={`flex items-center gap-2 p-2 rounded-lg transition-all text-xs group ${
                                         chapter.is_locked
                                           ? "bg-slate-900/30 text-slate-500 cursor-not-allowed"
@@ -810,7 +810,7 @@ const ReaderSettingsSidebar: React.FC<ReaderSettingsSidebarProps> = ({
                                       <span className="truncate flex-1">
                                         {title || chapter.title}
                                       </span>
-                                    </a>
+                                    </Link>
                                   );
                                 },
                               )}

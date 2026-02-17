@@ -29,8 +29,7 @@ function AppContent() {
       <div className="min-h-screen text-white transition-all duration-300">
         <Routes>
           {/* Reader Page - Full screen, no container constraints */}
-          <Route path="/read/:book_id" element={<ReaderPage />} />
-          <Route path="/read/:book_id/:chapter" element={<ReaderPage />} />
+          <Route path="/read/:book_id/:chapter?" element={<ReaderPage />} />
 
           {/* Other Pages - With navigation and centered container */}
           <Route
