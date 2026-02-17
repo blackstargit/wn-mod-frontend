@@ -43,6 +43,10 @@ const HomePage: React.FC = () => {
     "selectedLibraryTags",
     [],
   );
+  const [searchQuery, setSearchQuery] = useLocalStorage<string>(
+    "librarySearchQuery",
+    "",
+  );
 
   const {
     selectedNovels,
@@ -59,7 +63,7 @@ const HomePage: React.FC = () => {
     loadData();
   }, [loadData]);
 
-  // Filter novels by category and tags
+  // Filter novels by category, tags, and search query
   const filteredNovels = useMemo(() => {
     let result = novels;
 
@@ -73,8 +77,13 @@ const HomePage: React.FC = () => {
       );
     }
 
+    if (searchQuery.trim()) {
+      const query = searchQuery.toLowerCase().trim();
+      result = result.filter((n) => n.title.toLowerCase().includes(query));
+    }
+
     return result;
-  }, [novels, selectedCategory, selectedTags]);
+  }, [novels, selectedCategory, selectedTags, searchQuery]);
 
   const handleToggleFilterTag = (tagId: number) => {
     setSelectedTags((prev) =>
@@ -173,12 +182,58 @@ const HomePage: React.FC = () => {
       />
 
       <div className="card flex flex-wrap gap-4 items-center justify-between">
-        <SortControls
-          sortBy={sortBy}
-          sortOrder={sortOrder}
-          onSortByChange={setSortBy}
-          onSortOrderChange={setSortOrder}
-        />
+        <div className="flex flex-wrap gap-4 items-center flex-1">
+          <SortControls
+            sortBy={sortBy}
+            sortOrder={sortOrder}
+            onSortByChange={setSortBy}
+            onSortOrderChange={setSortOrder}
+          />
+
+          {/* Search Input */}
+          <div className="relative flex-1 min-w-[200px] max-w-md">
+            <input
+              type="text"
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              placeholder="Search novels by title..."
+              className="w-full px-4 py-2 pl-10 bg-slate-900/50 border border-slate-700/50 rounded-lg text-white placeholder-slate-500 focus:outline-none focus:border-purple-500/50 transition-colors"
+            />
+            <svg
+              className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-500"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
+              />
+            </svg>
+            {searchQuery && (
+              <button
+                onClick={() => setSearchQuery("")}
+                className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-500 hover:text-slate-300 transition-colors"
+              >
+                <svg
+                  className="w-4 h-4"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M6 18L18 6M6 6l12 12"
+                  />
+                </svg>
+              </button>
+            )}
+          </div>
+        </div>
 
         <div className="flex flex-wrap gap-4 items-center">
           <TagFilter
