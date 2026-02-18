@@ -4,8 +4,7 @@ import type { Chapter } from "@/types";
 interface UseChapterNavigationProps {
   currentChapterIndex: number;
   setCurrentChapterIndex: (index: number) => void;
-  totalChapters: number;
-  currentChapter: Chapter | null;
+  chapters: Chapter[];
 }
 
 /**
@@ -14,8 +13,7 @@ interface UseChapterNavigationProps {
 export function useChapterNavigation({
   currentChapterIndex,
   setCurrentChapterIndex,
-  totalChapters,
-  currentChapter,
+  chapters = [],
 }: UseChapterNavigationProps) {
   const tts = useTTS();
 
@@ -27,27 +25,32 @@ export function useChapterNavigation({
   };
 
   const handleNext = () => {
-    if (currentChapterIndex < totalChapters - 1) {
+    if (currentChapterIndex < chapters?.length - 1) {
       setCurrentChapterIndex(currentChapterIndex + 1);
       window.scrollTo(0, 0);
     }
   };
 
-  const handleTTS = (startParagraphIndex: number = 0) => {
-    if (currentChapter) {
+  const handleTTS = (
+    startParagraphIndex: number = 0,
+    startChapterIndex: number = currentChapterIndex,
+    onComplete?: () => void,
+  ) => {
+    const chapter = chapters[startChapterIndex];
+    if (chapter) {
       // Parse chapter content into paragraphs
-      const paragraphs = currentChapter.content
+      const paragraphs = chapter.content
         .split("\n\n")
         .map((p) => p.trim())
         .filter((p) => p.length > 0);
 
       // Start TTS from the specified index
-      tts.speak(paragraphs, startParagraphIndex, currentChapterIndex);
+      tts.speak(paragraphs, startParagraphIndex, startChapterIndex, onComplete);
     }
   };
 
   const hasPrevious = currentChapterIndex > 0;
-  const hasNext = currentChapterIndex < totalChapters - 1;
+  const hasNext = currentChapterIndex < chapters?.length - 1;
 
   return {
     handlePrevious,

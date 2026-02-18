@@ -42,6 +42,8 @@ const ReaderPage: React.FC = () => {
   const { isFullscreen, sidebarOpen, isDetached, setSidebarOpen, viewMode } =
     useReaderSettings();
   const tts = useTTS();
+
+  // State for continuous TTS
   const loading = loadingSession || loadingNovel || progressLoading;
 
   // Auto-scroll to active TTS paragraph
@@ -60,8 +62,7 @@ const ReaderPage: React.FC = () => {
     useChapterNavigation({
       currentChapterIndex,
       setCurrentChapterIndex,
-      totalChapters: chapters.length,
-      currentChapter: chapters[currentChapterIndex] || null,
+      chapters,
     });
 
   // Wrappers to reset paragraph index on manual navigation
@@ -76,6 +77,32 @@ const ReaderPage: React.FC = () => {
   };
 
   const currentChapter = chapters[currentChapterIndex];
+
+  // State for continuous TTS
+  const [shouldAutoPlayTTS, setShouldAutoPlayTTS] = React.useState(false);
+
+  // Effect to auto-play TTS when chapter changes (if requested)
+  React.useEffect(() => {
+    if (shouldAutoPlayTTS && !loadingNovel && currentChapter) {
+      setShouldAutoPlayTTS(false);
+      // Start from beginning of new chapter
+      handleTTS(0, currentChapterIndex, () => {
+        // Recursive callback for NEXT next chapter
+        if (currentChapterIndex < chapters.length - 1) {
+          setCurrentChapterIndex(currentChapterIndex + 1);
+          resetParagraphIndex();
+          setShouldAutoPlayTTS(true);
+        }
+      });
+    }
+  }, [
+    shouldAutoPlayTTS,
+    loadingNovel,
+    currentChapter,
+    currentChapterIndex,
+    chapters,
+    handleTTS,
+  ]);
 
   if (loading) {
     return (
@@ -109,22 +136,42 @@ const ReaderPage: React.FC = () => {
     const checkY = window.innerHeight * 0.3;
     const paragraphs = document.querySelectorAll("[data-paragraph-index]");
     let closestIndex = 0;
+    let closestChapterIndex = currentChapterIndex;
     let minDistance = Infinity;
 
     paragraphs.forEach((p) => {
       const rect = p.getBoundingClientRect();
       // Check if the paragraph is roughly around the checkY line
-      // We calculate distance from the vertical center of the paragraph to checkY
       const pCenter = rect.top + rect.height / 2;
       const distance = Math.abs(pCenter - checkY);
 
       if (distance < minDistance) {
         minDistance = distance;
         closestIndex = parseInt(p.getAttribute("data-paragraph-index") || "0");
+
+        // Also detect chapter index if available (Scroll Mode)
+        const chapterContainer = p.closest("[data-chapter-index]");
+        if (chapterContainer) {
+          closestChapterIndex = parseInt(
+            chapterContainer.getAttribute("data-chapter-index") ||
+              String(currentChapterIndex),
+          );
+        }
       }
     });
 
-    handleTTS(closestIndex);
+    // Use the updated handleTTS which accepts chapter index and onComplete
+    handleTTS(closestIndex, closestChapterIndex, () => {
+      // On Complete:
+      if (closestChapterIndex < chapters.length - 1) {
+        // 1. Move to next chapter
+        setCurrentChapterIndex(closestChapterIndex + 1);
+        resetParagraphIndex(); // Clean state
+
+        // 2. Set flag to auto-play when new chapter loads
+        setShouldAutoPlayTTS(true);
+      }
+    });
   };
 
   return (

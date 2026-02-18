@@ -21,6 +21,7 @@ interface TTSContextType {
     paragraphs: string[],
     startIndex?: number,
     chapterIndex?: number,
+    onComplete?: () => void,
   ) => void;
   pause: () => void;
   resume: () => void;
@@ -203,6 +204,9 @@ export const TTSProvider: React.FC<{ children: React.ReactNode }> = ({
             setIsPlaying(false);
             setIsPaused(false);
             setCurrentParagraphIndex(0);
+            if (onCompleteRef.current) {
+              onCompleteRef.current();
+            }
           }
         };
 
@@ -248,16 +252,20 @@ export const TTSProvider: React.FC<{ children: React.ReactNode }> = ({
     [selectedVoice, playbackRate],
   );
 
+  const onCompleteRef = useRef<(() => void) | undefined>(undefined);
+
   // Start speaking from a specific index
   const speak = useCallback(
     (
       paragraphs: string[],
       startIndex: number = 0,
       chapterIndex: number = -1,
+      onComplete?: () => void,
     ) => {
       paragraphsRef.current = paragraphs;
       setTotalParagraphs(paragraphs.length);
       setCurrentChapterIndex(chapterIndex);
+      onCompleteRef.current = onComplete;
       speakFromIndex(startIndex);
     },
     [speakFromIndex],
