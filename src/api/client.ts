@@ -28,9 +28,10 @@ export const novelApi = {
   updateMetadata: (
     book_id: string,
     metadata: {
-      last_read_chapter?: number;
+      progress?: number;
+      last_read_chapter?: number | string;
       last_accessed_at?: string;
-      category_id?: number;
+      category_id?: number | null;
     },
   ) => apiClient.patch(`/novels/${book_id}/metadata`, metadata),
   deleteNovel: (book_id: string) => apiClient.delete(`/novels/${book_id}`),

@@ -24,6 +24,8 @@ interface ReadingTabProps {
     color: string,
     type: "text" | "bg" | "screen",
   ) => void;
+  viewMode: "paged" | "scroll";
+  onViewModeChange: (mode: "paged" | "scroll") => void;
 }
 
 /**
@@ -44,6 +46,8 @@ const ReadingTab: React.FC<ReadingTabProps> = ({
   onContentBgColorChange,
   onScreenBgColorChange,
   onToggleFavoriteColor,
+  viewMode,
+  onViewModeChange,
 }) => {
   const [fontSearch, setFontSearch] = useState("");
 
@@ -67,6 +71,33 @@ const ReadingTab: React.FC<ReadingTabProps> = ({
         fontSearch={fontSearch}
         onFontSearchChange={setFontSearch}
       />
+
+      {/* View Mode */}
+      <div>
+        <h3 className="text-sm font-semibold text-slate-300 mb-3">View Mode</h3>
+        <div className="flex bg-slate-700/50 rounded-lg p-1 border border-slate-700">
+          <button
+            onClick={() => onViewModeChange("paged")}
+            className={`flex-1 py-2 px-3 rounded-md text-sm font-medium transition-all ${
+              viewMode === "paged"
+                ? "bg-purple-600 text-white shadow-sm"
+                : "text-slate-400 hover:text-slate-200"
+            }`}
+          >
+            Paged
+          </button>
+          <button
+            onClick={() => onViewModeChange("scroll")}
+            className={`flex-1 py-2 px-3 rounded-md text-sm font-medium transition-all ${
+              viewMode === "scroll"
+                ? "bg-purple-600 text-white shadow-sm"
+                : "text-slate-400 hover:text-slate-200"
+            }`}
+          >
+            Scroll
+          </button>
+        </div>
+      </div>
 
       {/* Font Size */}
       <div>

@@ -1,6 +1,6 @@
 import React from "react";
 import { ChevronDown, ChevronRight } from "lucide-react";
-import { Link } from "react-router-dom";
+
 import { useChapterParsing } from "@/hooks";
 
 interface TocChapter {
@@ -19,22 +19,23 @@ interface TocData {
 }
 
 interface TOCTabProps {
-  bookId: string;
+  bookId?: string;
   tocData: TocData | null;
   tocLoading: boolean;
   expandedVolumes: Record<number, boolean>;
   onToggleVolume: (index: number) => void;
+  onChapterSelect: (index: number) => void;
 }
 
 /**
  * TOC tab: expandable volumes and chapter links
  */
 const TOCTab: React.FC<TOCTabProps> = ({
-  bookId,
   tocData,
   tocLoading,
   expandedVolumes,
   onToggleVolume,
+  onChapterSelect,
 }) => {
   const { parseChapterTitle } = useChapterParsing();
 
@@ -85,12 +86,13 @@ const TOCTab: React.FC<TOCTabProps> = ({
                         const { index, title } = parseChapterTitle(
                           chapter.title,
                         );
+                        const i = index ? parseInt(index.toString()) : 0;
                         return (
-                          <Link
+                          <button
                             key={chapterIndex}
-                            to={`/read/${bookId}/${index}`}
+                            onClick={() => onChapterSelect(i > 0 ? i - 1 : 0)}
                             title={title}
-                            className={`flex items-center gap-2 p-2 rounded-lg transition-all text-xs group ${
+                            className={`flex items-center gap-2 p-2 rounded-lg transition-all text-xs group w-full text-left ${
                               chapter.is_locked
                                 ? "bg-slate-900/30 text-slate-500 cursor-not-allowed"
                                 : "bg-slate-900/30 hover:bg-slate-800/50 text-slate-300 hover:text-white border border-slate-700/30 hover:border-purple-500/50"
@@ -104,7 +106,7 @@ const TOCTab: React.FC<TOCTabProps> = ({
                             <span className="truncate flex-1">
                               {title || chapter.title}
                             </span>
-                          </Link>
+                          </button>
                         );
                       })}
                     </div>

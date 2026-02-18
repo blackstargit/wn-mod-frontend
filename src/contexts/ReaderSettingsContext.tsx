@@ -48,6 +48,9 @@ interface ReaderSettings {
   // Sidebar settings
   sidebarOpen: boolean;
   isDetached: boolean;
+
+  // View settings
+  viewMode: "paged" | "scroll";
 }
 
 interface ReaderSettingsContextType extends ReaderSettings {
@@ -70,6 +73,7 @@ interface ReaderSettingsContextType extends ReaderSettings {
   toggleFavoriteColor: (color: string, type: "text" | "bg" | "screen") => void;
   toggleFullscreen: () => void;
   toggleDetached: () => void;
+  setViewMode: (mode: "paged" | "scroll") => void;
 }
 
 const ReaderSettingsContext = createContext<
@@ -141,6 +145,10 @@ export const ReaderSettingsProvider: React.FC<ReaderSettingsProviderProps> = ({
     "reader-sidebar-detached",
     false,
   );
+  const [viewMode, setViewMode] = useLocalStorage<"paged" | "scroll">(
+    "reader-view-mode",
+    "paged",
+  );
 
   const toggleFavorite = (fontName: string) => {
     const newFavorites = favoriteFonts.includes(fontName)
@@ -197,6 +205,8 @@ export const ReaderSettingsProvider: React.FC<ReaderSettingsProviderProps> = ({
     toggleFavoriteColor,
     toggleFullscreen,
     toggleDetached,
+    viewMode,
+    setViewMode,
   };
 
   return (

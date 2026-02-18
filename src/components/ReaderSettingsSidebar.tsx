@@ -20,6 +20,7 @@ interface ReaderSettingsSidebarProps {
   hasPrev: boolean;
   hasNext: boolean;
   bookId: string;
+  onChapterSelect: (index: number) => void;
 }
 
 const TABS = [
@@ -36,6 +37,7 @@ const ReaderSettingsSidebar: React.FC<ReaderSettingsSidebarProps> = ({
   hasPrev,
   hasNext,
   bookId,
+  onChapterSelect,
 }) => {
   const [activeTab, setActiveTab] = useLocalStorage<TabType>(
     "readerSettingsActiveTab",
@@ -67,6 +69,8 @@ const ReaderSettingsSidebar: React.FC<ReaderSettingsSidebarProps> = ({
     toggleFavoriteColor,
     toggleFullscreen,
     toggleDetached,
+    viewMode,
+    setViewMode,
   } = useReaderSettings();
 
   const tts = useTTS();
@@ -125,6 +129,8 @@ const ReaderSettingsSidebar: React.FC<ReaderSettingsSidebarProps> = ({
               onContentBgColorChange={setContentBgColor}
               onScreenBgColorChange={setScreenBgColor}
               onToggleFavoriteColor={toggleFavoriteColor}
+              viewMode={viewMode}
+              onViewModeChange={setViewMode}
             />
           )}
 
@@ -146,6 +152,7 @@ const ReaderSettingsSidebar: React.FC<ReaderSettingsSidebarProps> = ({
               tocLoading={tocLoading}
               expandedVolumes={expandedVolumes}
               onToggleVolume={handleToggleVolume}
+              onChapterSelect={onChapterSelect}
             />
           )}
         </div>

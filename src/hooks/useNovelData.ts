@@ -27,20 +27,14 @@ export function useNovelData(bookId: string | undefined) {
         setNovel(novelResponse.data);
         setChapters(chaptersResponse.data);
 
-        const totalChapters = chaptersResponse.data.length;
-        let initialIndex = 0;
-
-        // Prefer URL param (e.g. /read/:book_id/5)
-        const chapterParam = window.location.pathname.split("/").pop();
-        if (chapterParam && !isNaN(parseInt(chapterParam))) {
-          initialIndex = parseInt(chapterParam) - 1;
-        } else if (novelResponse.data.last_read_chapter > 0) {
-          initialIndex = novelResponse.data.last_read_chapter - 1;
+        // Note: URL parsing for chapter index is removed.
+        // Restoration is handled by ReaderPage via session_id.
+        // We defaults to 0 (Chapter 1) here.
+        if (novelResponse.data.last_read_chapter > 0) {
+          // Ignored as we track via UUID/LocalStorage pointer now.
         }
 
-        // Clamp to valid range
-        initialIndex = Math.max(0, Math.min(initialIndex, totalChapters - 1));
-        setCurrentChapterIndex(initialIndex);
+        setCurrentChapterIndex(0);
       } catch (error) {
         console.error("Failed to load novel data:", error);
       } finally {

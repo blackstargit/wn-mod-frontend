@@ -12,11 +12,16 @@ interface TTSContextType {
   isPlaying: boolean;
   isPaused: boolean;
   currentParagraphIndex: number;
+  currentChapterIndex: number;
   totalParagraphs: number;
   availableVoices: SpeechSynthesisVoice[];
   selectedVoice: SpeechSynthesisVoice | null;
   playbackRate: number;
-  speak: (paragraphs: string[], startIndex?: number) => void;
+  speak: (
+    paragraphs: string[],
+    startIndex?: number,
+    chapterIndex?: number,
+  ) => void;
   pause: () => void;
   resume: () => void;
   stop: () => void;
@@ -42,6 +47,7 @@ export const TTSProvider: React.FC<{ children: React.ReactNode }> = ({
   const [isPlaying, setIsPlaying] = useState(false);
   const [isPaused, setIsPaused] = useState(false);
   const [currentParagraphIndex, setCurrentParagraphIndex] = useState(0);
+  const [currentChapterIndex, setCurrentChapterIndex] = useState(-1);
   const [totalParagraphs, setTotalParagraphs] = useState(0);
   const [availableVoices, setAvailableVoices] = useState<
     SpeechSynthesisVoice[]
@@ -242,9 +248,14 @@ export const TTSProvider: React.FC<{ children: React.ReactNode }> = ({
 
   // Start speaking from a specific index
   const speak = useCallback(
-    (paragraphs: string[], startIndex: number = 0) => {
+    (
+      paragraphs: string[],
+      startIndex: number = 0,
+      chapterIndex: number = -1,
+    ) => {
       paragraphsRef.current = paragraphs;
       setTotalParagraphs(paragraphs.length);
+      setCurrentChapterIndex(chapterIndex);
       speakFromIndex(startIndex);
     },
     [speakFromIndex],
@@ -272,6 +283,7 @@ export const TTSProvider: React.FC<{ children: React.ReactNode }> = ({
     setIsPlaying(false);
     setIsPaused(false);
     setCurrentParagraphIndex(0);
+    setCurrentChapterIndex(-1);
     utteranceRef.current = null;
   }, []);
 
@@ -305,6 +317,7 @@ export const TTSProvider: React.FC<{ children: React.ReactNode }> = ({
     previousParagraph,
     setVoice,
     setPlaybackRate,
+    currentChapterIndex,
   };
 
   return <TTSContext.Provider value={value}>{children}</TTSContext.Provider>;

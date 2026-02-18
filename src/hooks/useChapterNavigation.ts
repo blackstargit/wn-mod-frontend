@@ -42,7 +42,7 @@ export function useChapterNavigation({
         .filter((p) => p.length > 0);
 
       // Start TTS from the beginning
-      tts.speak(paragraphs, 0);
+      tts.speak(paragraphs, 0, currentChapterIndex);
     }
   };
 
