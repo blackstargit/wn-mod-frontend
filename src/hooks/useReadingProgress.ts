@@ -55,19 +55,30 @@ export function useReadingProgress(
     }
   }, [sessionId, progressKey]);
 
-  // 2. Save Progress (Debounced)
+  const lastSaveTimeRef = useRef<number>(0);
+
+  // 2. Save Progress (Throttled + Debounced)
   const saveProgress = useCallback(
     (progress: ReadingProgress) => {
       if (!sessionId) return;
 
-      // Update local state if chapter changed via scroll (optional, usually driven by parent)
-      // But we mostly use this to persist.
+      const now = Date.now();
+      const timeSinceLastSave = now - lastSaveTimeRef.current;
 
+      // Clear existing timeout
       if (saveTimeoutRef.current) clearTimeout(saveTimeoutRef.current);
 
-      saveTimeoutRef.current = setTimeout(() => {
+      // If it's been more than 2 seconds since last save, save immediately (throttle)
+      if (timeSinceLastSave > 2000) {
         localStorage.setItem(progressKey, JSON.stringify(progress));
-      }, 500);
+        lastSaveTimeRef.current = now;
+      } else {
+        // Otherwise, debounce for 500ms trailing
+        saveTimeoutRef.current = setTimeout(() => {
+          localStorage.setItem(progressKey, JSON.stringify(progress));
+          lastSaveTimeRef.current = Date.now();
+        }, 500);
+      }
     },
     [sessionId, progressKey],
   );

@@ -103,6 +103,30 @@ const ReaderPage: React.FC = () => {
     );
   }
 
+  // Smart TTS Handler: Starts from visible paragraph
+  const handleSmartTTS = () => {
+    // 1. Try to find the visible paragraph in the viewport
+    const checkY = window.innerHeight * 0.3; // Check at 30% down the screen
+    const element = document.elementFromPoint(window.innerWidth / 2, checkY);
+    let startIndex = 0;
+
+    if (element) {
+      const paragraph = element.closest("[data-paragraph-index]");
+      if (paragraph) {
+        startIndex = parseInt(
+          paragraph.getAttribute("data-paragraph-index") || "0",
+        );
+      } else {
+        // Fallback: Check if we are inside a chapter container
+        // If so, maybe find the first paragraph that is visible?
+        // simple fallback is 0 if not found.
+      }
+    }
+
+    // 2. Call TTS with detected index
+    handleTTS(startIndex);
+  };
+
   return (
     <div className="relative min-h-screen">
       <link
@@ -123,7 +147,7 @@ const ReaderPage: React.FC = () => {
 
       <div className="flex">
         <ReaderSettingsSidebar
-          onTTS={handleTTS}
+          onTTS={handleSmartTTS}
           onPrev={onPreviousChapter}
           onNext={onNextChapter}
           hasPrev={hasPrevious}

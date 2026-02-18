@@ -33,7 +33,7 @@ export function useChapterNavigation({
     }
   };
 
-  const handleTTS = () => {
+  const handleTTS = (startParagraphIndex: number = 0) => {
     if (currentChapter) {
       // Parse chapter content into paragraphs
       const paragraphs = currentChapter.content
@@ -41,8 +41,8 @@ export function useChapterNavigation({
         .map((p) => p.trim())
         .filter((p) => p.length > 0);
 
-      // Start TTS from the beginning
-      tts.speak(paragraphs, 0, currentChapterIndex);
+      // Start TTS from the specified index
+      tts.speak(paragraphs, startParagraphIndex, currentChapterIndex);
     }
   };
 
