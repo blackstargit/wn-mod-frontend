@@ -105,26 +105,26 @@ const ReaderPage: React.FC = () => {
 
   // Smart TTS Handler: Starts from visible paragraph
   const handleSmartTTS = () => {
-    // 1. Try to find the visible paragraph in the viewport
-    const checkY = window.innerHeight * 0.3; // Check at 30% down the screen
-    const element = document.elementFromPoint(window.innerWidth / 2, checkY);
-    let startIndex = 0;
+    // Robust detection: Scan all paragraphs to find the one closest to the reading line
+    const checkY = window.innerHeight * 0.3;
+    const paragraphs = document.querySelectorAll("[data-paragraph-index]");
+    let closestIndex = 0;
+    let minDistance = Infinity;
 
-    if (element) {
-      const paragraph = element.closest("[data-paragraph-index]");
-      if (paragraph) {
-        startIndex = parseInt(
-          paragraph.getAttribute("data-paragraph-index") || "0",
-        );
-      } else {
-        // Fallback: Check if we are inside a chapter container
-        // If so, maybe find the first paragraph that is visible?
-        // simple fallback is 0 if not found.
+    paragraphs.forEach((p) => {
+      const rect = p.getBoundingClientRect();
+      // Check if the paragraph is roughly around the checkY line
+      // We calculate distance from the vertical center of the paragraph to checkY
+      const pCenter = rect.top + rect.height / 2;
+      const distance = Math.abs(pCenter - checkY);
+
+      if (distance < minDistance) {
+        minDistance = distance;
+        closestIndex = parseInt(p.getAttribute("data-paragraph-index") || "0");
       }
-    }
+    });
 
-    // 2. Call TTS with detected index
-    handleTTS(startIndex);
+    handleTTS(closestIndex);
   };
 
   return (
