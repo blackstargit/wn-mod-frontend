@@ -1,11 +1,5 @@
 import { useLocalStorage } from "@/hooks";
-import React, {
-  createContext,
-  useContext,
-  useState,
-  useEffect,
-  type ReactNode,
-} from "react";
+import React, { createContext, useContext, type ReactNode } from "react";
 
 // Google Fonts library
 export const FONT_LIBRARY = [
@@ -99,112 +93,54 @@ interface ReaderSettingsProviderProps {
 export const ReaderSettingsProvider: React.FC<ReaderSettingsProviderProps> = ({
   children,
 }) => {
-  const [selectedFont, setSelectedFontState] = useState(FONT_LIBRARY[0]);
-  const [favoriteFonts, setFavoriteFontsState] = useState<string[]>([]);
-  const [fontSize, setFontSizeState] = useState(18);
-  const [textColor, setTextColorState] = useState("#e2e8f0");
-  const [contentBgColor, setContentBgColorState] = useState("#1e293b");
-  const [screenBgColor, setScreenBgColorState] = useState("#0f172a");
-  const [favoriteColors, setFavoriteColorsState] = useState<{
+  const [selectedFont, setSelectedFont] = useLocalStorage<
+    (typeof FONT_LIBRARY)[0]
+  >("reader-font-v2", FONT_LIBRARY[0]);
+  const [favoriteFonts, setFavoriteFonts] = useLocalStorage<string[]>(
+    "reader-favorite-fonts",
+    [],
+  );
+  const [fontSize, setFontSize] = useLocalStorage<number>(
+    "reader-font-size",
+    18,
+  );
+  const [textColor, setTextColor] = useLocalStorage<string>(
+    "reader-text-color",
+    "#e2e8f0",
+  );
+  const [contentBgColor, setContentBgColor] = useLocalStorage<string>(
+    "reader-content-bg",
+    "#1e293b",
+  );
+  const [screenBgColor, setScreenBgColor] = useLocalStorage<string>(
+    "reader-screen-bg",
+    "#0f172a",
+  );
+  const [favoriteColors, setFavoriteColors] = useLocalStorage<{
     text: string[];
     bg: string[];
     screen: string[];
-  }>({
+  }>("reader-favorite-colors", {
     text: [],
     bg: [],
     screen: [],
   });
-  const [isFullscreen, setIsFullscreenState] = useState(false);
-  const [brightness, setBrightnessState] = useState(100);
-  const [sidebarOpen, setSidebarOpenState] = useLocalStorage<boolean>("reader-sidebar-open", false);
-  const [isDetached, setIsDetachedState] = useState(false);
-
-  // Load settings from localStorage on mount
-  useEffect(() => {
-    const savedFont = localStorage.getItem("reader-font");
-    const savedFavorites = localStorage.getItem("reader-favorite-fonts");
-    const savedFontSize = localStorage.getItem("reader-font-size");
-    const savedTextColor = localStorage.getItem("reader-text-color");
-    const savedContentBg = localStorage.getItem("reader-content-bg");
-    const savedScreenBg = localStorage.getItem("reader-screen-bg");
-    const savedFullscreen = localStorage.getItem("reader-fullscreen");
-    const savedBrightness = localStorage.getItem("reader-brightness");
-    const savedDetached = localStorage.getItem("reader-sidebar-detached");
-    const savedFavoriteColors = localStorage.getItem("reader-favorite-colors");
-
-    if (savedFont) {
-      const font = FONT_LIBRARY.find((f) => f.name === savedFont);
-      if (font) setSelectedFontState(font);
-    }
-    if (savedFavorites) setFavoriteFontsState(JSON.parse(savedFavorites));
-    if (savedFontSize) setFontSizeState(parseInt(savedFontSize));
-    if (savedTextColor) setTextColorState(savedTextColor);
-    if (savedContentBg) setContentBgColorState(savedContentBg);
-    if (savedScreenBg) setScreenBgColorState(savedScreenBg);
-    if (savedFullscreen) setIsFullscreenState(savedFullscreen === "true");
-    if (savedBrightness) setBrightnessState(parseInt(savedBrightness));
-    if (savedDetached) setIsDetachedState(savedDetached === "true");
-    if (savedFavoriteColors)
-      setFavoriteColorsState(JSON.parse(savedFavoriteColors));
-  }, []);
-
-  const setSelectedFont = (font: (typeof FONT_LIBRARY)[0]) => {
-    setSelectedFontState(font);
-    localStorage.setItem("reader-font", font.name);
-  };
-
-  const setFavoriteFonts = (fonts: string[]) => {
-    setFavoriteFontsState(fonts);
-    localStorage.setItem("reader-favorite-fonts", JSON.stringify(fonts));
-  };
-
-  const setFontSize = (size: number) => {
-    setFontSizeState(size);
-    localStorage.setItem("reader-font-size", size.toString());
-  };
-
-  const setTextColor = (color: string) => {
-    setTextColorState(color);
-    localStorage.setItem("reader-text-color", color);
-  };
-
-  const setContentBgColor = (color: string) => {
-    setContentBgColorState(color);
-    localStorage.setItem("reader-content-bg", color);
-  };
-
-  const setScreenBgColor = (color: string) => {
-    setScreenBgColorState(color);
-    localStorage.setItem("reader-screen-bg", color);
-  };
-
-  const setFavoriteColors = (colors: {
-    text: string[];
-    bg: string[];
-    screen: string[];
-  }) => {
-    setFavoriteColorsState(colors);
-    localStorage.setItem("reader-favorite-colors", JSON.stringify(colors));
-  };
-
-  const setIsFullscreen = (value: boolean) => {
-    setIsFullscreenState(value);
-    localStorage.setItem("reader-fullscreen", value.toString());
-  };
-
-  const setBrightness = (value: number) => {
-    setBrightnessState(value);
-    localStorage.setItem("reader-brightness", value.toString());
-  };
-
-  const setSidebarOpen = (value: boolean) => {
-    setSidebarOpenState(value);
-  };
-
-  const setIsDetached = (value: boolean) => {
-    setIsDetachedState(value);
-    localStorage.setItem("reader-sidebar-detached", value.toString());
-  };
+  const [isFullscreen, setIsFullscreen] = useLocalStorage<boolean>(
+    "reader-fullscreen",
+    false,
+  );
+  const [brightness, setBrightness] = useLocalStorage<number>(
+    "reader-brightness",
+    100,
+  );
+  const [sidebarOpen, setSidebarOpen] = useLocalStorage<boolean>(
+    "reader-sidebar-open",
+    false,
+  );
+  const [isDetached, setIsDetached] = useLocalStorage<boolean>(
+    "reader-sidebar-detached",
+    false,
+  );
 
   const toggleFavorite = (fontName: string) => {
     const newFavorites = favoriteFonts.includes(fontName)

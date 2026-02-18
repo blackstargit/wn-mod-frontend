@@ -1,14 +1,11 @@
 import { Link, useLocation } from "react-router-dom";
-import { useState } from "react";
 import { Pin, PinOff, BookOpen, Book } from "lucide-react";
+import { useLocalStorage } from "@/hooks";
 
 // Navigation component to handle active states
 const Navigation = () => {
   const location = useLocation();
-  const [isFixed, setIsFixed] = useState(() => {
-    const saved = localStorage.getItem("nav-fixed");
-    return saved === null ? true : saved === "true";
-  });
+  const [isFixed, setIsFixed] = useLocalStorage<boolean>("nav-fixed", true);
 
   const isActive = (path: string) => location.pathname === path;
 
@@ -16,11 +13,7 @@ const Navigation = () => {
   const bookIdMatch = location.pathname.match(/\/(read|book)\/([^/]+)/);
   const bookId = bookIdMatch ? bookIdMatch[2] : null;
 
-  const toggleFixed = () => {
-    const newValue = !isFixed;
-    setIsFixed(newValue);
-    localStorage.setItem("nav-fixed", newValue.toString());
-  };
+  const toggleFixed = () => setIsFixed(!isFixed);
 
   // Don't show nav on reader page
   if (location.pathname.startsWith("/read/")) return null;

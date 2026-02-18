@@ -2,7 +2,7 @@ import React from "react";
 import { Settings, BookOpen, Mic, List } from "lucide-react";
 import { useReaderSettings } from "@/contexts/ReaderSettingsContext";
 import { useTTS } from "@/contexts/TTSContext";
-import { useTabPersistence, useTOCData } from "@/hooks";
+import { useLocalStorage, useTOCData } from "@/hooks";
 import {
   SidebarHeader,
   TabNavigation,
@@ -37,7 +37,10 @@ const ReaderSettingsSidebar: React.FC<ReaderSettingsSidebarProps> = ({
   hasNext,
   bookId,
 }) => {
-  const { activeTab, setActiveTab } = useTabPersistence();
+  const [activeTab, setActiveTab] = useLocalStorage<TabType>(
+    "readerSettingsActiveTab",
+    "general",
+  );
   const { tocData, tocLoading, expandedVolumes, setExpandedVolumes } =
     useTOCData(bookId);
 

@@ -1,4 +1,5 @@
 import React, { useState, useRef, useEffect } from "react";
+import { useLocalStorage } from "@/hooks";
 import {
   Play,
   Pause,
@@ -12,30 +13,18 @@ import { useTTS } from "@/contexts/TTSContext";
 
 const TTSPlayer: React.FC = () => {
   const tts = useTTS();
-  const [isMinimized, setIsMinimized] = useState(() => {
-    const saved = localStorage.getItem("ttsPlayerMinimized");
-    return saved === "true";
-  });
-  const [position, setPosition] = useState(() => {
-    const saved = localStorage.getItem("ttsPlayerPosition");
-    if (saved) {
-      return JSON.parse(saved);
-    }
-    return { x: window.innerWidth / 2 - 200, y: window.innerHeight - 150 };
-  });
+  const [isMinimized, setIsMinimized] = useLocalStorage<boolean>(
+    "ttsPlayerMinimized",
+    false,
+  );
+  const [position, setPosition] = useLocalStorage<{ x: number; y: number }>(
+    "ttsPlayerPosition",
+    { x: window.innerWidth / 2 - 200, y: window.innerHeight - 150 },
+  );
+
   const [isDragging, setIsDragging] = useState(false);
   const [dragOffset, setDragOffset] = useState({ x: 0, y: 0 });
   const playerRef = useRef<HTMLDivElement>(null);
-
-  // Persist minimized state
-  useEffect(() => {
-    localStorage.setItem("ttsPlayerMinimized", isMinimized.toString());
-  }, [isMinimized]);
-
-  // Persist position
-  useEffect(() => {
-    localStorage.setItem("ttsPlayerPosition", JSON.stringify(position));
-  }, [position]);
 
   // Handle drag start
   const handleMouseDown = (e: React.MouseEvent) => {

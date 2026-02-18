@@ -6,6 +6,7 @@ import React, {
   useEffect,
   useRef,
 } from "react";
+import { useLocalStorage } from "@/hooks";
 
 interface TTSContextType {
   isPlaying: boolean;
@@ -47,10 +48,14 @@ export const TTSProvider: React.FC<{ children: React.ReactNode }> = ({
   >([]);
   const [selectedVoice, setSelectedVoice] =
     useState<SpeechSynthesisVoice | null>(null);
-  const [playbackRate, setPlaybackRateState] = useState(() => {
-    const saved = localStorage.getItem("ttsPlaybackRate");
-    return saved ? parseFloat(saved) : 1.0;
-  });
+  const [savedVoiceName, setSavedVoiceName] = useLocalStorage<string>(
+    "ttsVoiceName",
+    "",
+  );
+  const [playbackRate, setPlaybackRateState] = useLocalStorage<number>(
+    "ttsPlaybackRate",
+    1.0,
+  );
 
   const paragraphsRef = useRef<string[]>([]);
   const utteranceRef = useRef<SpeechSynthesisUtterance | null>(null);
@@ -63,7 +68,6 @@ export const TTSProvider: React.FC<{ children: React.ReactNode }> = ({
         setAvailableVoices(voices);
 
         // Try to restore saved voice or use default
-        const savedVoiceName = localStorage.getItem("ttsVoiceName");
         if (savedVoiceName) {
           const voice = voices.find((v) => v.name === savedVoiceName);
           if (voice) {
@@ -104,23 +108,26 @@ export const TTSProvider: React.FC<{ children: React.ReactNode }> = ({
   }, []);
 
   // Set voice and persist
-  const setVoice = useCallback((voice: SpeechSynthesisVoice) => {
-    setSelectedVoice(voice);
-    localStorage.setItem("ttsVoiceName", voice.name);
-  }, []);
+  // Set voice and persist
+  const setVoice = useCallback(
+    (voice: SpeechSynthesisVoice) => {
+      setSelectedVoice(voice);
+      setSavedVoiceName(voice.name);
+    },
+    [setSavedVoiceName],
+  );
 
   // Set playback rate and persist
   const setPlaybackRate = useCallback(
     (rate: number) => {
       setPlaybackRateState(rate);
-      localStorage.setItem("ttsPlaybackRate", rate.toString());
 
       // Update current utterance if playing
       if (utteranceRef.current && isPlaying) {
         utteranceRef.current.rate = rate;
       }
     },
-    [isPlaying],
+    [isPlaying, setPlaybackRateState],
   );
 
   // Speak entire chapter from index (ZERO audio lag)
