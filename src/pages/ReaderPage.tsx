@@ -12,7 +12,6 @@ import {
 import ReaderSettingsSidebar from "@/components/ReaderSettingsSidebar";
 import TTSPlayer from "@/components/TTSPlayer";
 import {
-  ReaderTopBar,
   ReaderNavigation,
   ChapterHeader,
   ChapterContent,
@@ -113,9 +112,8 @@ const ReaderPage: React.FC = () => {
               isFullscreen ? "max-w-full p-2" : "max-w-4xl p-2"
             }`}
           >
-            <ReaderTopBar bookId={book_id || ""} />
-
             <ReaderNavigation
+              bookId={book_id || ""}
               onPrevious={handlePrevious}
               onNext={handleNext}
               onToggleSidebar={() => setSidebarOpen(!sidebarOpen)}
