@@ -1,11 +1,14 @@
-import React, { useEffect, useState } from "react";
+import React from "react";
 import { useParams } from "react-router-dom";
-import { novelApi } from "@/api/client";
-import type { Chapter, Novel } from "@/types";
 import { ChevronRight } from "lucide-react";
 import { useReaderSettings } from "@/contexts/ReaderSettingsContext";
 import { useTTS } from "@/contexts/TTSContext";
-import { useChapterSync, useChapterNavigation } from "@/hooks";
+import {
+  useChapterSync,
+  useChapterNavigation,
+  useNovelData,
+  useTTSAutoScroll,
+} from "@/hooks";
 import ReaderSettingsSidebar from "@/components/ReaderSettingsSidebar";
 import TTSPlayer from "@/components/TTSPlayer";
 import {
@@ -16,44 +19,26 @@ import {
 } from "@/components/Reader";
 
 const ReaderPage: React.FC = () => {
-  const { book_id } = useParams<{
-    book_id: string;
-  }>();
-  const [novel, setNovel] = useState<Novel | null>(null);
-  const [chapters, setChapters] = useState<Chapter[]>([]);
-  const [currentChapterIndex, setCurrentChapterIndex] = useState(0);
-  const [loading, setLoading] = useState(true);
+  const { book_id } = useParams<{ book_id: string }>();
 
-  // Get settings from context
+  // Data fetching
   const {
-    selectedFont,
-    fontSize,
-    textColor,
-    contentBgColor,
-    isFullscreen,
-    sidebarOpen,
-    isDetached,
-    setSidebarOpen,
-  } = useReaderSettings();
+    novel,
+    chapters,
+    currentChapterIndex,
+    setCurrentChapterIndex,
+    loading,
+  } = useNovelData(book_id);
 
+  // Settings & TTS
+  const { isFullscreen, sidebarOpen, isDetached, setSidebarOpen } =
+    useReaderSettings();
   const tts = useTTS();
 
-  // Auto-scroll to current TTS paragraph
-  useEffect(() => {
-    if (tts.isPlaying && tts.currentParagraphIndex >= 0) {
-      const paragraphElement = document.querySelector(
-        `[data-paragraph-index="${tts.currentParagraphIndex}"]`,
-      );
-      if (paragraphElement) {
-        paragraphElement.scrollIntoView({
-          behavior: "smooth",
-          block: "center",
-        });
-      }
-    }
-  }, [tts.currentParagraphIndex, tts.isPlaying]);
+  // Auto-scroll to active TTS paragraph
+  useTTSAutoScroll();
 
-  // Use custom hooks for chapter sync and navigation
+  // URL ↔ state sync + read progress tracking
   useChapterSync({
     currentChapterIndex,
     setCurrentChapterIndex,
@@ -61,6 +46,7 @@ const ReaderPage: React.FC = () => {
     bookId: book_id || "",
   });
 
+  // Prev / Next / TTS handlers
   const { handlePrevious, handleNext, handleTTS, hasPrevious, hasNext } =
     useChapterNavigation({
       currentChapterIndex,
@@ -69,54 +55,12 @@ const ReaderPage: React.FC = () => {
       currentChapter: chapters[currentChapterIndex] || null,
     });
 
-  useEffect(() => {
-    if (book_id) {
-      loadNovelAndChapters();
-    }
-  }, [book_id]);
-
-  const loadNovelAndChapters = async () => {
-    try {
-      setLoading(true);
-
-      const novelResponse = await novelApi.getNovel(book_id!);
-      setNovel(novelResponse.data);
-
-      const chaptersResponse = await novelApi.getChapters(book_id!);
-      setChapters(chaptersResponse.data);
-
-      let initialChapterIndex = 0;
-
-      // Get chapter from URL params
-      const chapterParam = window.location.pathname.split("/").pop();
-
-      if (chapterParam && !isNaN(parseInt(chapterParam))) {
-        initialChapterIndex = parseInt(chapterParam) - 1;
-      } else if (novelResponse.data.last_read_chapter > 0) {
-        initialChapterIndex = novelResponse.data.last_read_chapter - 1;
-      }
-
-      if (initialChapterIndex >= chaptersResponse.data.length) {
-        initialChapterIndex = chaptersResponse.data.length - 1;
-      }
-      if (initialChapterIndex < 0) {
-        initialChapterIndex = 0;
-      }
-
-      setCurrentChapterIndex(initialChapterIndex);
-    } catch (error) {
-      console.error(error);
-    } finally {
-      setLoading(false);
-    }
-  };
-
   const currentChapter = chapters[currentChapterIndex];
 
   if (loading) {
     return (
       <div className="flex justify-center items-center py-20">
-        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-purple-500"></div>
+        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-purple-500" />
       </div>
     );
   }
@@ -138,7 +82,7 @@ const ReaderPage: React.FC = () => {
         rel="stylesheet"
       />
 
-      {/* Fixed Chevron Button */}
+      {/* Sidebar open button (shown when sidebar is closed) */}
       {!sidebarOpen && (
         <button
           onClick={() => setSidebarOpen(true)}
@@ -150,7 +94,6 @@ const ReaderPage: React.FC = () => {
       )}
 
       <div className="flex">
-        {/* Reader Settings Sidebar Component */}
         <ReaderSettingsSidebar
           onTTS={handleTTS}
           onPrev={handlePrevious}
@@ -160,7 +103,6 @@ const ReaderPage: React.FC = () => {
           bookId={book_id || ""}
         />
 
-        {/* Main Content */}
         <div
           className={`flex-1 transition-all duration-300 ${
             sidebarOpen && !isDetached ? "ml-80" : "ml-0"
@@ -179,7 +121,6 @@ const ReaderPage: React.FC = () => {
               onToggleSidebar={() => setSidebarOpen(!sidebarOpen)}
               hasPrevious={hasPrevious}
               hasNext={hasNext}
-              // sidebarOpen={sidebarOpen}
             />
 
             <ChapterHeader
@@ -191,10 +132,6 @@ const ReaderPage: React.FC = () => {
 
             <ChapterContent
               content={currentChapter.content}
-              fontFamily={selectedFont.family}
-              fontSize={fontSize}
-              textColor={textColor}
-              backgroundColor={contentBgColor}
               ttsPlaying={tts.isPlaying}
               ttsCurrentParagraph={tts.currentParagraphIndex}
               onPrevious={handlePrevious}
@@ -206,7 +143,6 @@ const ReaderPage: React.FC = () => {
         </div>
       </div>
 
-      {/* TTS Player Popup */}
       <TTSPlayer />
     </div>
   );

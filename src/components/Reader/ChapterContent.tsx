@@ -1,11 +1,8 @@
 import React from "react";
+import { useReaderSettings } from "@/contexts/ReaderSettingsContext";
 
 interface ChapterContentProps {
   content: string;
-  fontFamily: string;
-  fontSize: number;
-  textColor: string;
-  backgroundColor: string;
   ttsPlaying: boolean;
   ttsCurrentParagraph: number;
   onPrevious: () => void;
@@ -15,14 +12,11 @@ interface ChapterContentProps {
 }
 
 /**
- * Chapter content display with TTS highlighting and navigation
+ * Chapter content display with TTS highlighting and navigation.
+ * Reads font/color settings directly from ReaderSettingsContext.
  */
 const ChapterContent: React.FC<ChapterContentProps> = ({
   content,
-  fontFamily,
-  fontSize,
-  textColor,
-  backgroundColor,
   ttsPlaying,
   ttsCurrentParagraph,
   onPrevious,
@@ -30,22 +24,25 @@ const ChapterContent: React.FC<ChapterContentProps> = ({
   hasPrevious,
   hasNext,
 }) => {
+  const { selectedFont, fontSize, textColor, contentBgColor } =
+    useReaderSettings();
+
   const paragraphs = content
     .split("\n\n")
-    .map((paragraph) => paragraph.trim())
-    .filter((paragraph) => paragraph.length > 0);
+    .map((p) => p.trim())
+    .filter((p) => p.length > 0);
 
   return (
     <div
       className="rounded-2xl p-8 shadow-xl border border-slate-700/50"
-      style={{ background: backgroundColor }}
+      style={{ background: contentBgColor }}
     >
       {/* Chapter Content */}
       <div className="prose prose-invert max-w-none mb-8">
         <div
           className="leading-relaxed"
           style={{
-            fontFamily,
+            fontFamily: selectedFont.family,
             color: textColor,
             fontSize: `${fontSize}px`,
           }}

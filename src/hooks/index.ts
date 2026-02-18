@@ -8,3 +8,5 @@ export { useChapterParsing } from "@/hooks/useChapterParsing";
 export { useBookDescription } from "@/hooks/useBookDescription";
 export { useTabPersistence } from "@/hooks/useTabPersistence";
 export { useTOCData } from "@/hooks/useTOCData";
+export { useNovelData } from "@/hooks/useNovelData";
+export { useTTSAutoScroll } from "@/hooks/useTTSAutoScroll";
