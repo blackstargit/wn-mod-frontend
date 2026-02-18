@@ -1,3 +1,9 @@
 export { default as SidebarHeader } from "./SidebarHeader";
 export { default as TabNavigation } from "./TabNavigation";
 export { default as NavigationControls } from "./NavigationControls";
+export { default as GeneralTab } from "./GeneralTab";
+export { default as ReadingTab } from "./ReadingTab";
+export { default as TTSTab } from "./TTSTab";
+export { default as TOCTab } from "./TOCTab";
+export { default as FontSelector } from "./FontSelector";
+export { default as ColorPicker } from "./ColorPicker";

@@ -1,30 +1,15 @@
-import React, { useState } from "react";
-import {
-  Search,
-  Star,
-  StarOff,
-  Maximize,
-  Minimize,
-  Sun,
-  Volume2,
-  Settings,
-  BookOpen,
-  Mic,
-  List,
-  ChevronDown,
-  ChevronRight,
-} from "lucide-react";
-import {
-  useReaderSettings,
-  FONT_LIBRARY,
-} from "@/contexts/ReaderSettingsContext";
+import React from "react";
+import { Settings, BookOpen, Mic, List } from "lucide-react";
+import { useReaderSettings } from "@/contexts/ReaderSettingsContext";
 import { useTTS } from "@/contexts/TTSContext";
-import { Link } from "react-router-dom";
-import { useTabPersistence, useTOCData, useChapterParsing } from "@/hooks";
+import { useTabPersistence, useTOCData } from "@/hooks";
 import {
   SidebarHeader,
   TabNavigation,
-  NavigationControls,
+  GeneralTab,
+  ReadingTab,
+  TTSTab,
+  TOCTab,
 } from "@/components/ReaderSettings";
 import type { TabType } from "@/types/readerSettings";
 
@@ -37,6 +22,13 @@ interface ReaderSettingsSidebarProps {
   bookId: string;
 }
 
+const TABS = [
+  { id: "general" as TabType, label: "", icon: Settings },
+  { id: "reading" as TabType, label: "", icon: BookOpen },
+  { id: "tts" as TabType, label: "", icon: Mic },
+  { id: "toc" as TabType, label: "", icon: List },
+];
+
 const ReaderSettingsSidebar: React.FC<ReaderSettingsSidebarProps> = ({
   onTTS,
   onPrev,
@@ -45,14 +37,9 @@ const ReaderSettingsSidebar: React.FC<ReaderSettingsSidebarProps> = ({
   hasNext,
   bookId,
 }) => {
-  const [fontSearch, setFontSearch] = useState("");
-  const [fontDropdownOpen, setFontDropdownOpen] = useState(false);
-
-  // Use custom hooks
   const { activeTab, setActiveTab } = useTabPersistence();
   const { tocData, tocLoading, expandedVolumes, setExpandedVolumes } =
     useTOCData(bookId);
-  const { parseChapterTitle } = useChapterParsing();
 
   const {
     selectedFont,
@@ -81,22 +68,9 @@ const ReaderSettingsSidebar: React.FC<ReaderSettingsSidebarProps> = ({
 
   const tts = useTTS();
 
-  const filteredFonts = FONT_LIBRARY.filter((font) =>
-    font.name.toLowerCase().includes(fontSearch.toLowerCase()),
-  );
-
-  const favoriteFontsList = FONT_LIBRARY.filter((font) =>
-    favoriteFonts.includes(font.name),
-  );
-
-  // TOC data and tab persistence now handled by custom hooks
-
-  const tabs = [
-    { id: "general" as TabType, label: "", icon: Settings },
-    { id: "reading" as TabType, label: "", icon: BookOpen },
-    { id: "tts" as TabType, label: "", icon: Mic },
-    { id: "toc" as TabType, label: "", icon: List },
-  ];
+  const handleToggleVolume = (index: number) => {
+    setExpandedVolumes((prev) => ({ ...prev, [index]: !prev[index] }));
+  };
 
   return (
     <div
@@ -112,627 +86,64 @@ const ReaderSettingsSidebar: React.FC<ReaderSettingsSidebarProps> = ({
         />
 
         <TabNavigation
-          tabs={tabs}
+          tabs={TABS}
           activeTab={activeTab}
           onTabChange={setActiveTab}
         />
 
-        {/* Scrollable Content */}
+        {/* Scrollable tab content */}
         <div className="flex-1 overflow-y-auto pr-2">
-          {/* General Tab */}
           {activeTab === "general" && (
-            <div className="space-y-6">
-              <NavigationControls
-                onPrev={onPrev}
-                onNext={onNext}
-                hasPrev={hasPrev}
-                hasNext={hasNext}
-              />
-
-              {/* Brightness */}
-              <div>
-                <h3 className="text-sm font-semibold text-slate-300 mb-3 flex items-center gap-2">
-                  <Sun className="w-4 h-4" />
-                  Brightness
-                </h3>
-                <div className="flex items-center gap-3">
-                  <input
-                    type="range"
-                    min="50"
-                    max="150"
-                    value={brightness}
-                    onChange={(e) => setBrightness(parseInt(e.target.value))}
-                    className="flex-1 h-2 bg-slate-700 rounded-lg appearance-none cursor-pointer accent-purple-600"
-                  />
-                  <span className="text-white font-mono text-sm w-12 text-right">
-                    {brightness}%
-                  </span>
-                </div>
-              </div>
-
-              {/* Reading Width */}
-              <div>
-                <h3 className="text-sm font-semibold text-slate-300 mb-3">
-                  Reading Width
-                </h3>
-                <button
-                  onClick={toggleFullscreen}
-                  className={`w-full flex items-center justify-between p-3 rounded-lg transition-all ${
-                    isFullscreen
-                      ? "bg-purple-600/20 border border-purple-500/50"
-                      : "bg-slate-900/50 border border-slate-700/50 hover:bg-slate-700/30"
-                  }`}
-                >
-                  <span className="text-white font-medium flex items-center gap-2">
-                    {isFullscreen ? (
-                      <>
-                        <Minimize className="w-4 h-4" />
-                        Reduce Size
-                      </>
-                    ) : (
-                      <>
-                        <Maximize className="w-4 h-4" />
-                        Increase Screen Size
-                      </>
-                    )}
-                  </span>
-                  <div
-                    className={`w-12 h-6 rounded-full transition-colors ${
-                      isFullscreen ? "bg-purple-600" : "bg-slate-600"
-                    } relative`}
-                  >
-                    <div
-                      className={`absolute top-1 left-1 w-4 h-4 bg-white rounded-full transition-transform ${
-                        isFullscreen ? "translate-x-6" : ""
-                      }`}
-                    />
-                  </div>
-                </button>
-              </div>
-            </div>
+            <GeneralTab
+              onPrev={onPrev}
+              onNext={onNext}
+              hasPrev={hasPrev}
+              hasNext={hasNext}
+              brightness={brightness}
+              onBrightnessChange={setBrightness}
+              isFullscreen={isFullscreen}
+              onToggleFullscreen={toggleFullscreen}
+            />
           )}
 
-          {/* Reading Tab */}
           {activeTab === "reading" && (
-            <div className="space-y-6">
-              {/* Font Selection */}
-              <div>
-                <h3 className="text-sm font-semibold text-slate-300 mb-3">
-                  Font Family
-                </h3>
-
-                <div className="mb-2 p-3 bg-slate-900/50 border border-slate-700/50 rounded-lg">
-                  <span
-                    className="text-white font-medium"
-                    style={{ fontFamily: selectedFont.family }}
-                  >
-                    {selectedFont.name}
-                  </span>
-                </div>
-
-                <div className="relative">
-                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 z-10" />
-                  <input
-                    type="text"
-                    placeholder="Search fonts..."
-                    value={fontSearch}
-                    onChange={(e) => setFontSearch(e.target.value)}
-                    onFocus={() => setFontDropdownOpen(true)}
-                    className="w-full pl-10 pr-4 py-2 bg-slate-900/50 border border-slate-700/50 rounded-lg text-white placeholder-slate-500 focus:outline-none focus:border-purple-500/50"
-                  />
-
-                  {fontDropdownOpen && (
-                    <>
-                      <div
-                        className="fixed inset-0 z-10"
-                        onClick={() => setFontDropdownOpen(false)}
-                      />
-
-                      <div className="absolute top-full left-0 right-0 mt-2 bg-slate-800 border border-slate-700/50 rounded-lg shadow-2xl max-h-80 overflow-y-auto z-20">
-                        {favoriteFontsList.length > 0 && (
-                          <div className="p-2 border-b border-slate-700/50">
-                            <h4 className="text-xs font-semibold text-slate-400 mb-2 px-2 flex items-center gap-1">
-                              <Star className="w-3 h-3 fill-yellow-400 text-yellow-400" />
-                              Favorites
-                            </h4>
-                            <div className="space-y-1">
-                              {favoriteFontsList.map((font) => (
-                                <button
-                                  key={font.name}
-                                  onClick={() => {
-                                    setSelectedFont(font);
-                                    setFontDropdownOpen(false);
-                                    setFontSearch("");
-                                  }}
-                                  className={`w-full flex items-center justify-between p-2 rounded-lg transition-all ${
-                                    selectedFont.name === font.name
-                                      ? "bg-purple-600/20 border border-purple-500/50"
-                                      : "hover:bg-slate-700/50"
-                                  }`}
-                                >
-                                  <span
-                                    className="text-white text-sm"
-                                    style={{ fontFamily: font.family }}
-                                  >
-                                    {font.name}
-                                  </span>
-                                  <button
-                                    onClick={(e) => {
-                                      e.stopPropagation();
-                                      toggleFavorite(font.name);
-                                    }}
-                                    className="p-1 hover:bg-slate-600/50 rounded"
-                                  >
-                                    <Star className="w-4 h-4 fill-yellow-400 text-yellow-400" />
-                                  </button>
-                                </button>
-                              ))}
-                            </div>
-                          </div>
-                        )}
-
-                        <div className="p-2">
-                          <h4 className="text-xs font-semibold text-slate-400 mb-2 px-2">
-                            All Fonts
-                          </h4>
-                          <div className="space-y-1">
-                            {filteredFonts.map((font) => (
-                              <button
-                                key={font.name}
-                                onClick={() => {
-                                  setSelectedFont(font);
-                                  setFontDropdownOpen(false);
-                                  setFontSearch("");
-                                }}
-                                className={`w-full flex items-center justify-between p-2 rounded-lg transition-all ${
-                                  selectedFont.name === font.name
-                                    ? "bg-purple-600/20 border border-purple-500/50"
-                                    : "hover:bg-slate-700/50"
-                                }`}
-                              >
-                                <span
-                                  className="text-white text-sm"
-                                  style={{ fontFamily: font.family }}
-                                >
-                                  {font.name}
-                                </span>
-                                <button
-                                  onClick={(e) => {
-                                    e.stopPropagation();
-                                    toggleFavorite(font.name);
-                                  }}
-                                  className="p-1 hover:bg-slate-600/50 rounded"
-                                >
-                                  {favoriteFonts.includes(font.name) ? (
-                                    <Star className="w-4 h-4 fill-yellow-400 text-yellow-400" />
-                                  ) : (
-                                    <StarOff className="w-4 h-4 text-slate-500" />
-                                  )}
-                                </button>
-                              </button>
-                            ))}
-                          </div>
-                        </div>
-                      </div>
-                    </>
-                  )}
-                </div>
-              </div>
-
-              {/* Font Size */}
-              <div>
-                <h3 className="text-sm font-semibold text-slate-300 mb-3">
-                  Font Size
-                </h3>
-                <div className="flex items-center gap-3">
-                  <input
-                    type="range"
-                    min="12"
-                    max="32"
-                    value={fontSize}
-                    onChange={(e) => setFontSize(parseInt(e.target.value))}
-                    className="flex-1 h-2 bg-slate-700 rounded-lg appearance-none cursor-pointer accent-purple-600"
-                  />
-                  <span className="text-white font-mono text-sm w-12 text-right">
-                    {fontSize}px
-                  </span>
-                </div>
-              </div>
-
-              {/* Text Color */}
-              <div>
-                <h3 className="text-sm font-semibold text-slate-300 mb-3">
-                  Text Color
-                </h3>
-
-                {favoriteColors.text.length > 0 && (
-                  <div className="flex gap-2 mb-2 flex-wrap">
-                    {favoriteColors.text.map((color) => (
-                      <button
-                        key={color}
-                        onClick={() => setTextColor(color)}
-                        className={`w-8 h-8 rounded-lg border-2 ${
-                          textColor === color
-                            ? "border-purple-500"
-                            : "border-slate-700/50"
-                        }`}
-                        style={{ backgroundColor: color }}
-                      />
-                    ))}
-                  </div>
-                )}
-
-                <div className="flex items-center gap-3">
-                  <input
-                    type="color"
-                    value={textColor}
-                    onChange={(e) => setTextColor(e.target.value)}
-                    className="w-12 h-12 rounded-lg cursor-pointer border-2 border-slate-700/50"
-                  />
-                  <div className="flex-1 flex gap-2">
-                    <input
-                      type="text"
-                      value={textColor}
-                      onChange={(e) => setTextColor(e.target.value)}
-                      className="flex-1 px-3 py-2 bg-slate-900/50 border border-slate-700/50 rounded-lg text-white font-mono text-sm focus:outline-none focus:border-purple-500/50"
-                    />
-                    <button
-                      onClick={() => toggleFavoriteColor(textColor, "text")}
-                      className="p-2 hover:bg-slate-700/50 rounded-lg transition-colors"
-                    >
-                      {favoriteColors.text.includes(textColor) ? (
-                        <Star className="w-5 h-5 fill-yellow-400 text-yellow-400" />
-                      ) : (
-                        <StarOff className="w-5 h-5 text-slate-500" />
-                      )}
-                    </button>
-                  </div>
-                </div>
-              </div>
-
-              {/* Content Background Color */}
-              <div>
-                <h3 className="text-sm font-semibold text-slate-300 mb-3">
-                  Content Background
-                </h3>
-
-                {favoriteColors.bg.length > 0 && (
-                  <div className="flex gap-2 mb-2 flex-wrap">
-                    {favoriteColors.bg.map((color) => (
-                      <button
-                        key={color}
-                        onClick={() => setContentBgColor(color)}
-                        className={`w-8 h-8 rounded-lg border-2 ${
-                          contentBgColor === color
-                            ? "border-purple-500"
-                            : "border-slate-700/50"
-                        }`}
-                        style={{ backgroundColor: color }}
-                      />
-                    ))}
-                  </div>
-                )}
-
-                <div className="flex items-center gap-3">
-                  <input
-                    type="color"
-                    value={contentBgColor}
-                    onChange={(e) => setContentBgColor(e.target.value)}
-                    className="w-12 h-12 rounded-lg cursor-pointer border-2 border-slate-700/50"
-                  />
-                  <div className="flex-1 flex gap-2">
-                    <input
-                      type="text"
-                      value={contentBgColor}
-                      onChange={(e) => setContentBgColor(e.target.value)}
-                      className="flex-1 px-3 py-2 bg-slate-900/50 border border-slate-700/50 rounded-lg text-white font-mono text-sm focus:outline-none focus:border-purple-500/50"
-                    />
-                    <button
-                      onClick={() => toggleFavoriteColor(contentBgColor, "bg")}
-                      className="p-2 hover:bg-slate-700/50 rounded-lg transition-colors"
-                    >
-                      {favoriteColors.bg.includes(contentBgColor) ? (
-                        <Star className="w-5 h-5 fill-yellow-400 text-yellow-400" />
-                      ) : (
-                        <StarOff className="w-5 h-5 text-slate-500" />
-                      )}
-                    </button>
-                  </div>
-                </div>
-              </div>
-
-              {/* Screen Background Color */}
-              <div>
-                <h3 className="text-sm font-semibold text-slate-300 mb-3">
-                  Screen Background
-                </h3>
-
-                {favoriteColors.screen?.length > 0 && (
-                  <div className="flex gap-2 mb-2 flex-wrap">
-                    {favoriteColors.screen?.map((color) => (
-                      <button
-                        key={color}
-                        onClick={() => setScreenBgColor(color)}
-                        className={`w-8 h-8 rounded-lg border-2 ${
-                          screenBgColor === color
-                            ? "border-purple-500"
-                            : "border-slate-700/50"
-                        }`}
-                        style={{ backgroundColor: color }}
-                      />
-                    ))}
-                  </div>
-                )}
-
-                <div className="flex items-center gap-3">
-                  <input
-                    type="color"
-                    value={screenBgColor}
-                    onChange={(e) => setScreenBgColor(e.target.value)}
-                    className="w-12 h-12 rounded-lg cursor-pointer border-2 border-slate-700/50"
-                  />
-                  <div className="flex-1 flex gap-2">
-                    <input
-                      type="text"
-                      value={screenBgColor}
-                      onChange={(e) => setScreenBgColor(e.target.value)}
-                      className="flex-1 px-3 py-2 bg-slate-900/50 border border-slate-700/50 rounded-lg text-white font-mono text-sm focus:outline-none focus:border-purple-500/50"
-                    />
-                    <button
-                      onClick={() =>
-                        toggleFavoriteColor(screenBgColor, "screen")
-                      }
-                      className="p-2 hover:bg-slate-700/50 rounded-lg transition-colors"
-                    >
-                      {favoriteColors.screen?.includes(screenBgColor) ? (
-                        <Star className="w-5 h-5 fill-yellow-400 text-yellow-400" />
-                      ) : (
-                        <StarOff className="w-5 h-5 text-slate-500" />
-                      )}
-                    </button>
-                  </div>
-                </div>
-              </div>
-            </div>
+            <ReadingTab
+              selectedFont={selectedFont}
+              favoriteFonts={favoriteFonts}
+              fontSize={fontSize}
+              textColor={textColor}
+              contentBgColor={contentBgColor}
+              screenBgColor={screenBgColor}
+              favoriteColors={favoriteColors}
+              onSelectFont={setSelectedFont}
+              onToggleFavoriteFont={toggleFavorite}
+              onFontSizeChange={setFontSize}
+              onTextColorChange={setTextColor}
+              onContentBgColorChange={setContentBgColor}
+              onScreenBgColorChange={setScreenBgColor}
+              onToggleFavoriteColor={toggleFavoriteColor}
+            />
           )}
 
-          {/* TTS Tab */}
           {activeTab === "tts" && (
-            <div className="space-y-6">
-              {/* Voice Selection */}
-              <div>
-                <h3 className="text-sm font-semibold text-slate-300 mb-3">
-                  Voice
-                </h3>
-                <select
-                  value={tts.selectedVoice?.name || ""}
-                  onChange={(e) => {
-                    const voice = tts.availableVoices.find(
-                      (v) => v.name === e.target.value,
-                    );
-                    if (voice) tts.setVoice(voice);
-                  }}
-                  className="w-full px-3 py-2 bg-slate-900/50 border border-slate-700/50 rounded-lg text-white focus:outline-none focus:border-purple-500/50"
-                >
-                  {tts.availableVoices.length === 0 && (
-                    <option>Loading voices...</option>
-                  )}
-
-                  {/* Offline Voices */}
-                  {tts.availableVoices.filter((v) => v.localService !== false)
-                    .length > 0 && (
-                    <optgroup label="🔒 Offline Voices (Work without internet)">
-                      {tts.availableVoices
-                        .filter((v) => v.localService !== false)
-                        .map((voice) => (
-                          <option key={voice.name} value={voice.name}>
-                            {voice.name} ({voice.lang})
-                          </option>
-                        ))}
-                    </optgroup>
-                  )}
-
-                  {/* Online Voices */}
-                  {tts.availableVoices.filter((v) => v.localService === false)
-                    .length > 0 && (
-                    <optgroup label="🌐 Online Voices (Require internet)">
-                      {tts.availableVoices
-                        .filter((v) => v.localService === false)
-                        .map((voice) => (
-                          <option key={voice.name} value={voice.name}>
-                            {voice.name} ({voice.lang})
-                          </option>
-                        ))}
-                    </optgroup>
-                  )}
-                </select>
-                <p className="mt-2 text-xs text-slate-400">
-                  {
-                    tts.availableVoices.filter((v) => v.localService !== false)
-                      .length
-                  }{" "}
-                  offline,{" "}
-                  {
-                    tts.availableVoices.filter((v) => v.localService === false)
-                      .length
-                  }{" "}
-                  online
-                </p>
-              </div>
-
-              {/* Playback Speed */}
-              <div>
-                <h3 className="text-sm font-semibold text-slate-300 mb-3">
-                  Playback Speed
-                </h3>
-                <div className="flex items-center gap-3 mb-3">
-                  <input
-                    type="range"
-                    min="0.5"
-                    max="2.0"
-                    step="0.1"
-                    value={tts.playbackRate}
-                    onChange={(e) =>
-                      tts.setPlaybackRate(parseFloat(e.target.value))
-                    }
-                    className="flex-1 h-2 bg-slate-700 rounded-lg appearance-none cursor-pointer accent-purple-600"
-                  />
-                  <span className="text-white font-mono text-sm w-12 text-right">
-                    {tts.playbackRate.toFixed(1)}x
-                  </span>
-                </div>
-
-                {/* Preset Buttons */}
-                <div className="grid grid-cols-4 gap-2">
-                  {[0.75, 1.0, 1.25, 1.5].map((rate) => (
-                    <button
-                      key={rate}
-                      onClick={() => tts.setPlaybackRate(rate)}
-                      className={`px-3 py-2 rounded-lg text-sm font-medium transition-all ${
-                        tts.playbackRate === rate
-                          ? "bg-purple-600/20 text-purple-400 border border-purple-500/50"
-                          : "bg-slate-700/50 text-slate-300 hover:bg-slate-600/50"
-                      }`}
-                    >
-                      {rate}x
-                    </button>
-                  ))}
-                </div>
-              </div>
-
-              {/* Start TTS Button */}
-              <div>
-                <h3 className="text-sm font-semibold text-slate-300 mb-3">
-                  Text to Speech
-                </h3>
-                <button
-                  onClick={onTTS}
-                  disabled={!tts.selectedVoice}
-                  className="w-full flex items-center justify-center gap-2 p-4 bg-blue-600/20 hover:bg-blue-600/30 disabled:opacity-50 disabled:cursor-not-allowed text-blue-400 rounded-lg transition-colors border border-blue-500/30"
-                >
-                  <Volume2 className="w-5 h-5" />
-                  <span className="font-semibold">Start Text to Speech</span>
-                </button>
-                <p className="mt-3 text-xs text-slate-400">
-                  Click to start reading the current chapter aloud using your
-                  browser's text-to-speech engine.
-                </p>
-              </div>
-            </div>
+            <TTSTab
+              availableVoices={tts.availableVoices}
+              selectedVoice={tts.selectedVoice}
+              playbackRate={tts.playbackRate}
+              onVoiceChange={tts.setVoice}
+              onPlaybackRateChange={tts.setPlaybackRate}
+              onStartTTS={onTTS}
+            />
           )}
 
-          {/* TOC Tab */}
           {activeTab === "toc" && (
-            <div className="space-y-6">
-              <div>
-                <h3 className="text-sm font-semibold text-slate-300 mb-3">
-                  Table of Contents
-                </h3>
-
-                {tocLoading && (
-                  <div className="text-center text-slate-400 py-8">
-                    Loading table of contents...
-                  </div>
-                )}
-
-                {!tocLoading && !tocData && (
-                  <div className="text-center text-slate-400 py-8">
-                    No table of contents available
-                  </div>
-                )}
-
-                {!tocLoading && tocData && tocData.toc && (
-                  <div className="space-y-3">
-                    {tocData.toc.map((volume: any, volumeIndex: number) => {
-                      // Helper to parse chapter title (same as BookDescriptionPage)
-                      const parseChapterTitle = (rawTitle: string) => {
-                        const indexMatch = rawTitle.match(/^(\d+)\s+/);
-                        if (!indexMatch)
-                          return { index: "", title: rawTitle, date: "" };
-
-                        const index = indexMatch[1];
-                        let rest = rawTitle.substring(indexMatch[0].length);
-
-                        const dateMatch = rest.match(
-                          /\s+(\d+\s+[a-zA-Z]+\s+ago|just now|yesterday|today)$/i,
-                        );
-
-                        let date = "";
-                        let title = rest;
-
-                        if (dateMatch) {
-                          date = dateMatch[1];
-                          title = rest
-                            .substring(0, rest.length - dateMatch[0].length)
-                            .trim();
-                        }
-
-                        return { index, title, date };
-                      };
-
-                      return (
-                        <div
-                          key={volumeIndex}
-                          className="border border-slate-700/30 rounded-lg overflow-hidden"
-                        >
-                          <button
-                            onClick={() => {
-                              setExpandedVolumes((prev) => ({
-                                ...prev,
-                                [volumeIndex]: !prev[volumeIndex],
-                              }));
-                            }}
-                            className="w-full flex items-center justify-between p-3 bg-slate-800/80 hover:bg-slate-700/80 transition-colors"
-                          >
-                            <h4 className="font-semibold text-purple-400 text-sm">
-                              {volume.volume}
-                            </h4>
-                            {expandedVolumes[volumeIndex] ? (
-                              <ChevronDown className="w-4 h-4 text-slate-400" />
-                            ) : (
-                              <ChevronRight className="w-4 h-4 text-slate-400" />
-                            )}
-                          </button>
-
-                          {expandedVolumes[volumeIndex] && (
-                            <div className="p-2 space-y-1 bg-slate-900/40 max-h-full overflow-y-auto">
-                              {volume.chapters.map(
-                                (chapter: any, chapterIndex: number) => {
-                                  const { index, title } = parseChapterTitle(
-                                    chapter.title,
-                                  );
-                                  return (
-                                    <Link
-                                      key={chapterIndex}
-                                      to={`/read/${bookId}/${index}`}
-                                      title={title}
-                                      className={`flex items-center gap-2 p-2 rounded-lg transition-all text-xs group ${
-                                        chapter.is_locked
-                                          ? "bg-slate-900/30 text-slate-500 cursor-not-allowed"
-                                          : "bg-slate-900/30 hover:bg-slate-800/50 text-slate-300 hover:text-white border border-slate-700/30 hover:border-purple-500/50"
-                                      }`}
-                                    >
-                                      {index && (
-                                        <span className="text-slate-500 font-mono text-xs min-w-[2rem]">
-                                          {index}
-                                        </span>
-                                      )}
-                                      <span className="truncate flex-1">
-                                        {title || chapter.title}
-                                      </span>
-                                    </Link>
-                                  );
-                                },
-                              )}
-                            </div>
-                          )}
-                        </div>
-                      );
-                    })}
-                  </div>
-                )}
-              </div>
-            </div>
+            <TOCTab
+              bookId={bookId}
+              tocData={tocData}
+              tocLoading={tocLoading}
+              expandedVolumes={expandedVolumes}
+              onToggleVolume={handleToggleVolume}
+            />
           )}
         </div>
       </div>
