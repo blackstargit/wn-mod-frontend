@@ -10,7 +10,7 @@ interface TTSTabProps {
   onStartTTS: () => void;
 }
 
-const SPEED_PRESETS = [0.75, 1.0, 1.25, 1.5];
+const SPEED_PRESETS = [1.0, 1.25, 1.5, 1.75, 2.0, 2.25];
 
 /**
  * TTS tab: voice selection, playback speed, and start button
@@ -77,7 +77,7 @@ const TTSTab: React.FC<TTSTabProps> = ({
           <input
             type="range"
             min="0.5"
-            max="2.0"
+            max="3.0"
             step="0.1"
             value={playbackRate}
             onChange={(e) => onPlaybackRateChange(parseFloat(e.target.value))}

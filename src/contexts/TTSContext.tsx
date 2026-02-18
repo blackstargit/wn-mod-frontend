@@ -71,7 +71,9 @@ export const TTSProvider: React.FC<{ children: React.ReactNode }> = ({
     const loadVoices = () => {
       const voices = window.speechSynthesis.getVoices();
       if (voices.length > 0) {
-        setAvailableVoices(voices);
+        // Filter for English voices only
+        const englishVoices = voices.filter((v) => v.lang.startsWith("en"));
+        setAvailableVoices(englishVoices);
 
         // Try to restore saved voice or use default
         if (savedVoiceName) {
