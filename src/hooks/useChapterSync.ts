@@ -40,7 +40,8 @@ export function useChapterSync({
         window.scrollTo(0, 0);
       }
     }
-  }, [chapter, chapters.length, currentChapterIndex, setCurrentChapterIndex]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [chapter, chapters.length]);
 
   // Sync URL with state and update progress
   useEffect(() => {
