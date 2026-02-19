@@ -18,6 +18,8 @@ const NovelCard: React.FC<NovelCardProps> = ({
   categories,
   tags,
   onScrape,
+  onRescrapeDescription,
+  onRescrapeChapters,
   onDelete,
   isScraping,
   isSelectionMode = false,
@@ -85,7 +87,14 @@ const NovelCard: React.FC<NovelCardProps> = ({
   };
 
   const handleRescrape = () => {
-    onScrape(novel.book_id);
+    if (onRescrapeDescription) {
+      console.log("ON RESCRAPE")
+      onRescrapeDescription(novel.book_id);
+    } else {
+      console.log("ON SCRAPE")
+
+      onScrape(novel.book_id);
+    }
     setShowMenu(false);
   };
 
@@ -211,6 +220,22 @@ const NovelCard: React.FC<NovelCardProps> = ({
                     <RefreshCw className="w-4 h-4" />
                     Rescrape Description
                   </button>
+
+                  {/* New Rescrape Chapters Button - Only if novel is already scraped/has content */}
+                  {novel.scraped && (
+                    <button
+                      onClick={() => {
+                        onRescrapeChapters?.(novel.book_id);
+                        setShowMenu(false);
+                      }}
+                      disabled={isScraping}
+                      className="flex items-center gap-3 px-4 py-3 text-left hover:bg-slate-700 transition-colors text-slate-200 text-sm border-b border-slate-700/50 disabled:opacity-50"
+                    >
+                      <Download className="w-4 h-4" />
+                      Rescrape Chapters
+                    </button>
+                  )}
+
                   <button
                     onClick={handleDelete}
                     className="flex items-center gap-3 px-4 py-3 text-left hover:bg-red-900/20 text-red-400 transition-colors text-sm"

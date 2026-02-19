@@ -120,6 +120,32 @@ const HomePage: React.FC = () => {
     }
   };
 
+  const handleRescrapeDescription = async (book_id: string) => {
+    setScraping(book_id);
+    try {
+      // Force refresh description
+      await novelApi.getNovelDescription(book_id, true);
+      // Reload library data to reflect changes (e.g. updated stats)
+      await loadData();
+      setScraping(null);
+    } catch (error) {
+      console.error(error);
+      setScraping(null);
+    }
+  };
+
+  const handleRescrapeChapters = async (book_id: string) => {
+    setScraping(book_id);
+    try {
+      // Trigger chapter scraping
+      await novelApi.scrapeNovel(book_id);
+      setScraping(null);
+    } catch (error) {
+      console.error(error);
+      setScraping(null);
+    }
+  };
+
   const handleDeleteNovel = async (book_id: string) => {
     if (window.confirm("Delete this novel? This cannot be undone.")) {
       try {
@@ -264,6 +290,8 @@ const HomePage: React.FC = () => {
         tags={tags}
         scraping={scraping}
         onScrape={handleScrape}
+        onRescrapeDescription={handleRescrapeDescription}
+        onRescrapeChapters={handleRescrapeChapters}
         onDelete={handleDeleteNovel}
         loading={loading}
         isSelectionMode={isSelectionMode}
