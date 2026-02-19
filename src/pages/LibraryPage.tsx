@@ -138,7 +138,7 @@ const HomePage: React.FC = () => {
     setScraping(book_id);
     try {
       // Trigger chapter scraping
-      await novelApi.scrapeNovel(book_id, true);
+      await novelApi.scrapeNovel(book_id);
       setScraping(null);
     } catch (error) {
       console.error(error);
