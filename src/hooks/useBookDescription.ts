@@ -119,7 +119,7 @@ export function useBookDescription(
     if (!bookId) return;
     setScrapingChapters(true);
     try {
-      await novelApi.scrapeNovel(bookId);
+      await novelApi.scrapeNovel(bookId, false);
       setTimeout(() => {
         checkChaptersScraped();
         setScrapingChapters(false);
