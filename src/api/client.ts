@@ -21,16 +21,19 @@ export const novelApi = {
     apiClient.get(`/novels/${book_id}/chapters`),
   scrapeNovel: (book_id: string) =>
     apiClient.post(`/scraper/${book_id}/scrape`),
-  getNovelDescription: (book_id: string) =>
-    apiClient.get(`/scraper/${book_id}/description`),
+  getNovelDescription: (book_id: string, forceRefresh: boolean = false) =>
+    apiClient.get(
+      `/scraper/${book_id}/description${forceRefresh ? "?force_refresh=true" : ""}`,
+    ),
   getDescriptionStatus: (book_id: string) =>
     apiClient.get(`/scraper/${book_id}/description/status`),
   updateMetadata: (
     book_id: string,
     metadata: {
-      last_read_chapter?: number;
+      progress?: number;
+      last_read_chapter?: number | string;
       last_accessed_at?: string;
-      category_id?: number;
+      category_id?: number | null;
     },
   ) => apiClient.patch(`/novels/${book_id}/metadata`, metadata),
   deleteNovel: (book_id: string) => apiClient.delete(`/novels/${book_id}`),

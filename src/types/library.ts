@@ -23,6 +23,8 @@ interface NovelCardProps {
   categories: Category[];
   tags: Tag[];
   onScrape: (book_id: string) => void;
+  onRescrapeDescription: (book_id: string) => void;
+  onRescrapeChapters: (book_id: string) => void;
   onDelete: (book_id: string) => void;
   isScraping: boolean;
   isSelectionMode?: boolean;
@@ -37,6 +39,8 @@ interface NovelListProps {
   tags: Tag[];
   scraping: string | null;
   onScrape: (book_id: string) => void;
+  onRescrapeDescription: (book_id: string) => void;
+  onRescrapeChapters: (book_id: string) => void;
   onDelete: (book_id: string) => void;
   loading: boolean;
   isSelectionMode?: boolean;

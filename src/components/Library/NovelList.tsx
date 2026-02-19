@@ -8,6 +8,8 @@ const NovelList: React.FC<NovelListProps> = ({
   tags,
   scraping,
   onScrape,
+  onRescrapeDescription,
+  onRescrapeChapters,
   onDelete,
   loading,
   isSelectionMode = false,
@@ -47,6 +49,8 @@ const NovelList: React.FC<NovelListProps> = ({
             categories={categories}
             tags={tags}
             onScrape={onScrape}
+            onRescrapeDescription={onRescrapeDescription}
+            onRescrapeChapters={onRescrapeChapters}
             onDelete={onDelete}
             isScraping={scraping === novel.book_id}
             isSelectionMode={isSelectionMode}

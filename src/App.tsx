@@ -9,40 +9,60 @@ import {
   ReaderSettingsProvider,
   useReaderSettings,
 } from "@/contexts/ReaderSettingsContext";
+import { TTSProvider } from "@/contexts/TTSContext";
 
 function AppContent() {
   const { screenBgColor, brightness } = useReaderSettings();
 
   return (
-    <div
-      className="min-h-screen text-white transition-all duration-300"
-      style={{
-        background: screenBgColor,
-        filter: `brightness(${brightness}%)`,
-      }}
-    >
-      {/* Main Content */}
-      <main className="max-w-7xl mx-auto py-8 px-4 sm:px-6 lg:px-8">
-        <Navigation />
+    <>
+      {/* Background layer with brightness filter */}
+      <div
+        className="fixed inset-0 -z-10 transition-all duration-300"
+        style={{
+          background: screenBgColor,
+          filter: `brightness(${brightness}%)`,
+        }}
+      />
+
+      {/* Content layer - no filter to allow fixed positioning */}
+      <div className="min-h-screen text-white transition-all duration-300">
         <Routes>
-          <Route path="/" element={<HomePage />} />
-          <Route path="/categories" element={<CategoriesPage />} />
-          <Route path="/tags" element={<TagsPage />} />
-          <Route path="/book/:book_id" element={<BookDescriptionPage />} />
-          <Route path="/read/:book_id" element={<ReaderPage />} />
-          <Route path="/read/:book_id/:chapter" element={<ReaderPage />} />
+          {/* Reader Page - Full screen, no container constraints */}
+          <Route path="/read/:book_id/:session_id?" element={<ReaderPage />} />
+
+          {/* Other Pages - With navigation and centered container */}
+          <Route
+            path="*"
+            element={
+              <main className="max-w-7xl mx-auto py-8 px-4 sm:px-6 lg:px-8">
+                <Navigation />
+                <Routes>
+                  <Route path="/" element={<HomePage />} />
+                  <Route path="/categories" element={<CategoriesPage />} />
+                  <Route path="/tags" element={<TagsPage />} />
+                  <Route
+                    path="/book/:book_id"
+                    element={<BookDescriptionPage />}
+                  />
+                </Routes>
+              </main>
+            }
+          />
         </Routes>
-      </main>
-    </div>
+      </div>
+    </>
   );
 }
 
 function App() {
   return (
     <ReaderSettingsProvider>
-      <Router>
-        <AppContent />
-      </Router>
+      <TTSProvider>
+        <Router>
+          <AppContent />
+        </Router>
+      </TTSProvider>
     </ReaderSettingsProvider>
   );
 }
