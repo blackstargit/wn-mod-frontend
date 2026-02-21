@@ -7,9 +7,7 @@ import React, {
   useRef,
 } from "react";
 import { useLocalStorage } from "@/hooks";
-import {
-  TextToSpeech,
-} from "@capacitor-community/text-to-speech";
+import { TextToSpeech } from "@capacitor-community/text-to-speech";
 import { Capacitor } from "@capacitor/core";
 
 // Define a unified voice type to bridge Web and Capacitor
@@ -107,9 +105,9 @@ export const TTSProvider: React.FC<{ children: React.ReactNode }> = ({
 
   // Mapping Web voices to UnifiedVoice
   const mapWebVoice = useCallback((v: SpeechSynthesisVoice): UnifiedVoice => ({
-    name: v.name,
-    lang: v.lang,
-    localService: v.localService,
+      name: v.name,
+      lang: v.lang,
+      localService: v.localService,
     voiceURI: v.voiceURI
   }), []);
 
@@ -129,7 +127,7 @@ export const TTSProvider: React.FC<{ children: React.ReactNode }> = ({
             lang: v.lang,
             localService: true,
             voiceURI: v.name,
-            index: index // Crucial for Capacitor v8
+            index: index, // Crucial for Capacitor v8
           }));
         } catch (e) {
           console.error("Capacitor voices load error:", e);
@@ -150,15 +148,25 @@ export const TTSProvider: React.FC<{ children: React.ReactNode }> = ({
           if (voice) {
             setSelectedVoice(voice);
           } else {
-            const fallback = voices.find(v => v.lang.startsWith("en") && !v.name.toLowerCase().includes("google")) 
-                            || voices.find(v => !v.name.toLowerCase().includes("google")) 
-                            || voices[0];
+            const fallback =
+              voices.find(
+                (v) =>
+                  v.lang.startsWith("en") &&
+                  !v.name.toLowerCase().includes("google"),
+              ) ||
+              voices.find((v) => !v.name.toLowerCase().includes("google")) ||
+              voices[0];
             setSelectedVoice(fallback);
           }
         } else {
-          const fallback = voices.find(v => v.lang.startsWith("en") && !v.name.toLowerCase().includes("google")) 
-                          || voices.find(v => !v.name.toLowerCase().includes("google")) 
-                          || voices[0];
+          const fallback =
+            voices.find(
+              (v) =>
+                v.lang.startsWith("en") &&
+                !v.name.toLowerCase().includes("google"),
+            ) ||
+            voices.find((v) => !v.name.toLowerCase().includes("google")) ||
+            voices[0];
           setSelectedVoice(fallback);
         }
       } else if (attempts < maxAttempts) {
@@ -216,16 +224,33 @@ export const TTSProvider: React.FC<{ children: React.ReactNode }> = ({
         window.speechSynthesis.cancel();
       }
 
-      const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+      const isMobile =
+        /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(
+          navigator.userAgent,
+        );
       const waitTime = isMobile ? 300 : 100;
 
       setTimeout(async () => {
-        // Restore 10-paragraph chunking as requested to eliminate gaps
-        const maxParagraphs = 10;
-        const endIndex = Math.min(
-          startIndex + maxParagraphs,
-          paragraphsRef.current.length,
-        );
+        // Reduced chunk size and added character limit to avoid Android "Failed to read text" errors
+        const maxParagraphs = 5;
+        const maxCharacters = 3000; // Android's actual limit is around 4000, we stay safe
+
+        let endIndex = startIndex;
+        let currentChars = 0;
+
+        for (
+          let i = startIndex;
+          i <
+          Math.min(startIndex + maxParagraphs, paragraphsRef.current.length);
+          i++
+        ) {
+          const p = paragraphsRef.current[i];
+          if (currentChars + p.length + 2 > maxCharacters && i > startIndex) {
+            break;
+          }
+          currentChars += p.length + 2;
+          endIndex = i + 1;
+        }
 
         const textToSpeak = paragraphsRef.current
           .slice(startIndex, endIndex)
@@ -233,6 +258,9 @@ export const TTSProvider: React.FC<{ children: React.ReactNode }> = ({
 
         if (isCapacitor) {
           try {
+            console.log(
+              `Speaking paragraphs ${startIndex} to ${endIndex - 1} (${textToSpeak.length} chars)`,
+            );
             await TextToSpeech.speak({
               text: textToSpeak,
               lang: selectedVoice.lang,
@@ -241,7 +269,7 @@ export const TTSProvider: React.FC<{ children: React.ReactNode }> = ({
               volume: 1.0,
               voice: selectedVoice.index ?? 0,
             });
-            
+
             // Continuous play
             if (endIndex < paragraphsRef.current.length) {
               speakFromIndex(endIndex);
@@ -253,15 +281,21 @@ export const TTSProvider: React.FC<{ children: React.ReactNode }> = ({
             }
           } catch (e) {
             console.error("Capacitor TTS Speak Error:", e);
-            setIsPlaying(false);
+            // On failure, try to skip this chunk and continue to next one instead of just stopping
+            if (endIndex < paragraphsRef.current.length) {
+              console.warn("Retrying with next paragraph due to error...");
+              speakFromIndex(startIndex + 1); // better than endIndex
+            } else {
+              setIsPlaying(false);
+            }
           }
         } else {
           // Web Fallback
           const utterance = new SpeechSynthesisUtterance(textToSpeak);
           const webVoices = window.speechSynthesis.getVoices();
-          const webVoice = webVoices.find(v => v.name === selectedVoice.name);
+          const webVoice = webVoices.find((v) => v.name === selectedVoice.name);
           if (webVoice) utterance.voice = webVoice;
-          
+
           utterance.rate = playbackRate;
           utterance.onend = () => {
             if (endIndex < paragraphsRef.current.length) {
@@ -275,7 +309,7 @@ export const TTSProvider: React.FC<{ children: React.ReactNode }> = ({
           };
           utterance.onerror = (e: SpeechSynthesisErrorEvent) => {
             // Ignore interrupted/canceled errors which happen when skipping paragraphs
-            if (e.error === 'interrupted' || e.error === 'canceled') {
+            if (e.error === "interrupted" || e.error === "canceled") {
               return;
             }
             console.error("Web TTS Error:", e);

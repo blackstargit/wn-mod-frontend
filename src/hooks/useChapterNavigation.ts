@@ -38,9 +38,9 @@ export function useChapterNavigation({
   ) => {
     const chapter = chapters[startChapterIndex];
     if (chapter) {
-      // Parse chapter content into paragraphs
+      // Parse chapter content into paragraphs robustly
       const paragraphs = chapter.content
-        .split("\n\n")
+        .split(/\r?\n\r?\n/)
         .map((p) => p.trim())
         .filter((p) => p.length > 0);
 
