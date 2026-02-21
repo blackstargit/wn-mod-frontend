@@ -178,7 +178,7 @@ const TTSPlayer: React.FC = () => {
           </div>
         ) : (
           // Full Mode - Complete player
-          <div className="min-w-[400px]">
+          <div className="w-[340px] max-w-[calc(100vw-2rem)]">
             {/* Header */}
             <div className="flex items-center justify-between mb-3">
               <div className="flex items-center gap-2">
