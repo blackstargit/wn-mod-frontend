@@ -26,13 +26,25 @@ const TTSPlayer: React.FC = () => {
   const [dragOffset, setDragOffset] = useState({ x: 0, y: 0 });
   const playerRef = useRef<HTMLDivElement>(null);
 
-  // Handle drag start
+  // Handle drag start (Mouse)
   const handleMouseDown = (e: React.MouseEvent) => {
     if (playerRef.current) {
       const rect = playerRef.current.getBoundingClientRect();
       setDragOffset({
         x: e.clientX - rect.left,
         y: e.clientY - rect.top,
+      });
+      setIsDragging(true);
+    }
+  };
+
+  // Handle drag start (Touch)
+  const handleTouchStart = (e: React.TouchEvent) => {
+    if (playerRef.current && e.touches[0]) {
+      const rect = playerRef.current.getBoundingClientRect();
+      setDragOffset({
+        x: e.touches[0].clientX - rect.left,
+        y: e.touches[0].clientY - rect.top,
       });
       setIsDragging(true);
     }
@@ -49,20 +61,33 @@ const TTSPlayer: React.FC = () => {
       }
     };
 
-    const handleMouseUp = () => {
+    const handleTouchMove = (e: TouchEvent) => {
+      if (isDragging && e.touches[0]) {
+        setPosition({
+          x: e.touches[0].clientX - dragOffset.x,
+          y: e.touches[0].clientY - dragOffset.y,
+        });
+      }
+    };
+
+    const handleEnd = () => {
       setIsDragging(false);
     };
 
     if (isDragging) {
       document.addEventListener("mousemove", handleMouseMove);
-      document.addEventListener("mouseup", handleMouseUp);
+      document.addEventListener("mouseup", handleEnd);
+      document.addEventListener("touchmove", handleTouchMove, { passive: false });
+      document.addEventListener("touchend", handleEnd);
     }
 
     return () => {
       document.removeEventListener("mousemove", handleMouseMove);
-      document.removeEventListener("mouseup", handleMouseUp);
+      document.removeEventListener("mouseup", handleEnd);
+      document.removeEventListener("touchmove", handleTouchMove);
+      document.removeEventListener("touchend", handleEnd);
     };
-  }, [isDragging, dragOffset]);
+  }, [isDragging, dragOffset, setPosition]);
 
   if (!tts.isPlaying) {
     return null;
@@ -75,6 +100,7 @@ const TTSPlayer: React.FC = () => {
       style={{
         left: `${position.x}px`,
         top: `${position.y}px`,
+        touchAction: "none",
       }}
     >
       <div
@@ -82,6 +108,7 @@ const TTSPlayer: React.FC = () => {
           isMinimized ? "p-2" : "p-4"
         }`}
         onMouseDown={handleMouseDown}
+        onTouchStart={handleTouchStart}
       >
         {isMinimized ? (
           // Minimalist Mode - Only icon buttons
