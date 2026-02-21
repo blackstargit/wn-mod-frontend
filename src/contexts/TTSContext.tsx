@@ -69,6 +69,9 @@ export const TTSProvider: React.FC<{ children: React.ReactNode }> = ({
 
   // Load available voices
   useEffect(() => {
+    let attempts = 0;
+    const maxAttempts = 10;
+    
     const loadVoices = () => {
       const voices = window.speechSynthesis.getVoices();
       if (voices.length > 0) {
@@ -83,28 +86,32 @@ export const TTSProvider: React.FC<{ children: React.ReactNode }> = ({
             setSelectedVoice(voice);
           } else {
             // Fallback to offline voice
-            const offlineVoice = voices.find(
-              (v) => !v.name.toLowerCase().includes("google"),
-            );
             const englishOfflineVoice = voices.find(
               (v) =>
                 v.lang.startsWith("en") &&
-                !v.name.toLowerCase().includes("google"),
+                (v.localService === true || !v.name.toLowerCase().includes("google")),
             );
-            setSelectedVoice(englishOfflineVoice || offlineVoice || voices[0]);
+            const anyOfflineVoice = voices.find(
+              (v) => v.localService === true || !v.name.toLowerCase().includes("google"),
+            );
+            setSelectedVoice(englishOfflineVoice || anyOfflineVoice || voices[0]);
           }
         } else {
           // Default to offline English voice
-          const offlineVoice = voices.find(
-            (v) => !v.name.toLowerCase().includes("google"),
-          );
           const englishOfflineVoice = voices.find(
             (v) =>
               v.lang.startsWith("en") &&
-              !v.name.toLowerCase().includes("google"),
+              (v.localService === true || !v.name.toLowerCase().includes("google")),
           );
-          setSelectedVoice(englishOfflineVoice || offlineVoice || voices[0]);
+          const anyOfflineVoice = voices.find(
+            (v) => v.localService === true || !v.name.toLowerCase().includes("google"),
+          );
+          setSelectedVoice(englishOfflineVoice || anyOfflineVoice || voices[0]);
         }
+      } else if (attempts < maxAttempts) {
+        // On mobile, voices might be empty initially. Retry after a delay.
+        attempts++;
+        setTimeout(loadVoices, 500);
       }
     };
 
@@ -114,7 +121,7 @@ export const TTSProvider: React.FC<{ children: React.ReactNode }> = ({
     return () => {
       window.speechSynthesis.onvoiceschanged = null;
     };
-  }, []);
+  }, [savedVoiceName]);
 
   // Set voice and persist
   // Set voice and persist
@@ -164,15 +171,22 @@ export const TTSProvider: React.FC<{ children: React.ReactNode }> = ({
       window.speechSynthesis.cancel();
 
       // Wait for cancel to complete
+      // Mobile browsers (especially Android) require a longer delay
+      const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+      const waitTime = isMobile ? 300 : 100;
+
       setTimeout(() => {
         // Detect if this is an online voice
         // Online voices have localService = false (they require internet)
         // Offline voices have localService = true (built into OS)
         const isOnlineVoice = selectedVoice.localService === false;
 
-        // Online voices: use smaller chunks (5 paragraphs max)
-        // Offline voices: use entire chapter for zero lag
-        const maxParagraphs = isOnlineVoice ? 5 : paragraphsRef.current.length;
+        // ON MOBILE: Always use smaller chunks (max 5 paragraphs)
+        // Mobile browsers have strict memory/length limits for TTS utterances.
+        // ON PC Online voices: use smaller chunks
+        // ON PC Offline voices: use entire chapter for zero lag
+        const maxParagraphs = (isMobile || isOnlineVoice) ? 5 : paragraphsRef.current.length;
+        
         const endIndex = Math.min(
           startIndex + maxParagraphs,
           paragraphsRef.current.length,
@@ -218,15 +232,20 @@ export const TTSProvider: React.FC<{ children: React.ReactNode }> = ({
             return;
           }
 
-          // Only stop on real errors
+          // Handle specific errors
           if (
             event.error === "network" ||
             event.error === "synthesis-failed" ||
-            event.error === "audio-busy"
+            event.error === "audio-busy" ||
+            event.error === "not-allowed"
           ) {
-            alert(
-              `TTS Error: ${event.error}. ${event.error === "network" ? "Online voices require internet connection. Please select an offline voice." : "Please try again or select a different voice."}`,
-            );
+            const errorMsg = 
+              event.error === "network" ? "Online voices require internet connection. Please try an offline voice." :
+              event.error === "not-allowed" ? "Speech not allowed. Please click on the page first." :
+              event.error === "audio-busy" ? "Audio system is busy. Please wait a moment." :
+              "TTS synthesis failed. Trying with smaller chunks or different voice might help.";
+            
+            alert(`TTS Error: ${event.error}. ${errorMsg}`);
           }
 
           setIsPlaying(false);
@@ -236,18 +255,21 @@ export const TTSProvider: React.FC<{ children: React.ReactNode }> = ({
         utteranceRef.current = utterance;
         window.speechSynthesis.speak(utterance);
 
-        // Detect if voice fails to start (common with online voices)
+        // Detect if voice fails to start (common with online voices or missing gesture)
         setTimeout(() => {
           if (!hasStarted && window.speechSynthesis.speaking === false) {
             console.error("[TTS] Voice failed to start after 3 seconds");
-            alert(
-              "TTS failed to start. This voice may require internet connection or may not be available. Please try an offline voice.",
-            );
-            setIsPlaying(false);
-            setIsPaused(false);
+            // Only alert if we're supposed to be playing
+            if (isPlaying && !hasStarted) {
+               alert(
+                "TTS failed to start. This voice may require internet connection, a user gesture, or may not be available. Please try an offline voice.",
+              );
+              setIsPlaying(false);
+              setIsPaused(false);
+            }
           }
-        }, 3000);
-      }, 100);
+        }, 3500);
+      }, waitTime);
     },
     [selectedVoice, playbackRate],
   );
