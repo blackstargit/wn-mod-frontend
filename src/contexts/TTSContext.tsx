@@ -7,6 +7,19 @@ import React, {
   useRef,
 } from "react";
 import { useLocalStorage } from "@/hooks";
+import {
+  TextToSpeech,
+} from "@capacitor-community/text-to-speech";
+import { Capacitor } from "@capacitor/core";
+
+// Define a unified voice type to bridge Web and Capacitor
+export interface UnifiedVoice {
+  name: string;
+  lang: string;
+  localService: boolean;
+  voiceURI: string;
+  index?: number; // Added for Capacitor
+}
 
 interface TTSContextType {
   isPlaying: boolean;
@@ -14,8 +27,8 @@ interface TTSContextType {
   currentParagraphIndex: number;
   currentChapterIndex: number;
   totalParagraphs: number;
-  availableVoices: SpeechSynthesisVoice[];
-  selectedVoice: SpeechSynthesisVoice | null;
+  availableVoices: UnifiedVoice[];
+  selectedVoice: UnifiedVoice | null;
   playbackRate: number;
   speak: (
     paragraphs: string[],
@@ -28,7 +41,7 @@ interface TTSContextType {
   stop: () => void;
   nextParagraph: () => void;
   previousParagraph: () => void;
-  setVoice: (voice: SpeechSynthesisVoice) => void;
+  setVoice: (voice: UnifiedVoice) => void;
   setPlaybackRate: (rate: number) => void;
 }
 
@@ -50,11 +63,8 @@ export const TTSProvider: React.FC<{ children: React.ReactNode }> = ({
   const [currentParagraphIndex, setCurrentParagraphIndex] = useState(0);
   const [currentChapterIndex, setCurrentChapterIndex] = useState(-1);
   const [totalParagraphs, setTotalParagraphs] = useState(0);
-  const [availableVoices, setAvailableVoices] = useState<
-    SpeechSynthesisVoice[]
-  >([]);
-  const [selectedVoice, setSelectedVoice] =
-    useState<SpeechSynthesisVoice | null>(null);
+  const [availableVoices, setAvailableVoices] = useState<UnifiedVoice[]>([]);
+  const [selectedVoice, setSelectedVoice] = useState<UnifiedVoice | null>(null);
   const [savedVoiceName, setSavedVoiceName] = useLocalStorage<string>(
     "ttsVoiceName",
     "",
@@ -65,15 +75,70 @@ export const TTSProvider: React.FC<{ children: React.ReactNode }> = ({
   );
 
   const paragraphsRef = useRef<string[]>([]);
-  const utteranceRef = useRef<SpeechSynthesisUtterance | null>(null);
+  const isCapacitor = Capacitor.isNativePlatform();
+
+  // Media Session Control Setup (Standard Web API - works on Android Chrome/Capacitor)
+  useEffect(() => {
+    if (!("mediaSession" in navigator)) return;
+
+    const setupMediaControls = () => {
+      navigator.mediaSession.metadata = new MediaMetadata({
+        title: "Novel Reader",
+        artist: "AI Narrator",
+        album: "Novel App",
+        artwork: [],
+      });
+
+      navigator.mediaSession.setActionHandler("play", () => resume());
+      navigator.mediaSession.setActionHandler("pause", () => pause());
+      navigator.mediaSession.setActionHandler("stop", () => stop());
+      navigator.mediaSession.setActionHandler("nexttrack", () => nextParagraph());
+      navigator.mediaSession.setActionHandler("previoustrack", () => previousParagraph());
+    };
+
+    setupMediaControls();
+  }, []); // Run once
+
+  // Update Media State
+  useEffect(() => {
+    if (!("mediaSession" in navigator)) return;
+    navigator.mediaSession.playbackState = isPlaying ? (isPaused ? "paused" : "playing") : "none";
+  }, [isPlaying, isPaused]);
+
+  // Mapping Web voices to UnifiedVoice
+  const mapWebVoice = useCallback((v: SpeechSynthesisVoice): UnifiedVoice => ({
+    name: v.name,
+    lang: v.lang,
+    localService: v.localService,
+    voiceURI: v.voiceURI
+  }), []);
 
   // Load available voices
   useEffect(() => {
     let attempts = 0;
     const maxAttempts = 10;
-    
-    const loadVoices = () => {
-      const voices = window.speechSynthesis.getVoices();
+
+    const loadVoices = async () => {
+      let voices: UnifiedVoice[] = [];
+
+      if (isCapacitor) {
+        try {
+          const capVoices = await TextToSpeech.getSupportedVoices();
+          voices = capVoices.voices.map((v, index) => ({
+            name: v.name,
+            lang: v.lang,
+            localService: true,
+            voiceURI: v.name,
+            index: index // Crucial for Capacitor v8
+          }));
+        } catch (e) {
+          console.error("Capacitor voices load error:", e);
+        }
+      } else {
+        const webVoices = window.speechSynthesis.getVoices();
+        voices = webVoices.map(mapWebVoice);
+      }
+
       if (voices.length > 0) {
         // Filter for English voices only
         const englishVoices = voices.filter((v) => v.lang.startsWith("en"));
@@ -85,198 +150,144 @@ export const TTSProvider: React.FC<{ children: React.ReactNode }> = ({
           if (voice) {
             setSelectedVoice(voice);
           } else {
-            // Fallback to offline voice
-            const englishOfflineVoice = voices.find(
-              (v) =>
-                v.lang.startsWith("en") &&
-                (v.localService === true || !v.name.toLowerCase().includes("google")),
-            );
-            const anyOfflineVoice = voices.find(
-              (v) => v.localService === true || !v.name.toLowerCase().includes("google"),
-            );
-            setSelectedVoice(englishOfflineVoice || anyOfflineVoice || voices[0]);
+            const fallback = voices.find(v => v.lang.startsWith("en") && !v.name.toLowerCase().includes("google")) 
+                            || voices.find(v => !v.name.toLowerCase().includes("google")) 
+                            || voices[0];
+            setSelectedVoice(fallback);
           }
         } else {
-          // Default to offline English voice
-          const englishOfflineVoice = voices.find(
-            (v) =>
-              v.lang.startsWith("en") &&
-              (v.localService === true || !v.name.toLowerCase().includes("google")),
-          );
-          const anyOfflineVoice = voices.find(
-            (v) => v.localService === true || !v.name.toLowerCase().includes("google"),
-          );
-          setSelectedVoice(englishOfflineVoice || anyOfflineVoice || voices[0]);
+          const fallback = voices.find(v => v.lang.startsWith("en") && !v.name.toLowerCase().includes("google")) 
+                          || voices.find(v => !v.name.toLowerCase().includes("google")) 
+                          || voices[0];
+          setSelectedVoice(fallback);
         }
       } else if (attempts < maxAttempts) {
-        // On mobile, voices might be empty initially. Retry after a delay.
         attempts++;
         setTimeout(loadVoices, 500);
       }
     };
 
     loadVoices();
-    window.speechSynthesis.onvoiceschanged = loadVoices;
+    if (!isCapacitor) {
+      window.speechSynthesis.onvoiceschanged = loadVoices;
+    }
 
     return () => {
-      window.speechSynthesis.onvoiceschanged = null;
+      if (!isCapacitor) {
+        window.speechSynthesis.onvoiceschanged = null;
+      }
     };
-  }, [savedVoiceName]);
+  }, [savedVoiceName, isCapacitor, mapWebVoice]);
 
-  // Set voice and persist
-  // Set voice and persist
   const setVoice = useCallback(
-    (voice: SpeechSynthesisVoice) => {
+    (voice: UnifiedVoice) => {
       setSelectedVoice(voice);
       setSavedVoiceName(voice.name);
     },
     [setSavedVoiceName],
   );
 
-  // Set playback rate and persist
   const setPlaybackRate = useCallback(
     (rate: number) => {
       setPlaybackRateState(rate);
-
-      // Update current utterance if playing
-      if (utteranceRef.current && isPlaying) {
-        utteranceRef.current.rate = rate;
-      }
     },
-    [isPlaying, setPlaybackRateState],
+    [setPlaybackRateState],
   );
 
-  // Speak entire chapter from index (ZERO audio lag)
+  const onCompleteRef = useRef<(() => void) | undefined>(undefined);
+
   const speakFromIndex = useCallback(
-    (startIndex: number) => {
+    async (startIndex: number) => {
       if (
         !selectedVoice ||
         startIndex < 0 ||
         startIndex >= paragraphsRef.current.length
       ) {
-        console.error("[TTS] Cannot speak:", {
-          selectedVoice,
-          startIndex,
-          length: paragraphsRef.current.length,
-        });
         return;
       }
 
-      // Set state immediately for instant UI feedback
       setCurrentParagraphIndex(startIndex);
       setIsPlaying(true);
       setIsPaused(false);
 
-      // Cancel any ongoing speech
-      window.speechSynthesis.cancel();
+      if (isCapacitor) {
+        await TextToSpeech.stop();
+      } else {
+        window.speechSynthesis.cancel();
+      }
 
-      // Wait for cancel to complete
-      // Mobile browsers (especially Android) require a longer delay
       const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
       const waitTime = isMobile ? 300 : 100;
 
-      setTimeout(() => {
-        // Detect if this is an online voice
-        // Online voices have localService = false (they require internet)
-        // Offline voices have localService = true (built into OS)
-        const isOnlineVoice = selectedVoice.localService === false;
-
-        // ON MOBILE: Always use smaller chunks (max 5 paragraphs)
-        // Mobile browsers have strict memory/length limits for TTS utterances.
-        // ON PC Online voices: use smaller chunks
-        // ON PC Offline voices: use entire chapter for zero lag
-        const maxParagraphs = (isMobile || isOnlineVoice) ? 5 : paragraphsRef.current.length;
-        
+      setTimeout(async () => {
+        // Restore 10-paragraph chunking as requested to eliminate gaps
+        const maxParagraphs = 10;
         const endIndex = Math.min(
           startIndex + maxParagraphs,
           paragraphsRef.current.length,
         );
 
-        // Speak from startIndex to endIndex
         const textToSpeak = paragraphsRef.current
           .slice(startIndex, endIndex)
           .join("\n\n");
 
-        const utterance = new SpeechSynthesisUtterance(textToSpeak);
-        utterance.voice = selectedVoice;
-        utterance.rate = playbackRate;
-        utterance.pitch = 1.0;
-        utterance.volume = 1.0;
-
-        let hasStarted = false;
-
-        utterance.onstart = () => {
-          hasStarted = true;
-        };
-
-        utterance.onend = () => {
-          // If there are more paragraphs, continue automatically
-          if (endIndex < paragraphsRef.current.length) {
-            speakFromIndex(endIndex);
-          } else {
-            // Finished all paragraphs
-            setIsPlaying(false);
-            setIsPaused(false);
-            setCurrentParagraphIndex(0);
-            if (onCompleteRef.current) {
-              onCompleteRef.current();
-            }
-          }
-        };
-
-        utterance.onerror = (event) => {
-          console.error("TTS Error:", event.error, event);
-
-          // Ignore "interrupted" errors - these happen when clicking Next/Prev
-          if (event.error === "interrupted") {
-            return;
-          }
-
-          // Handle specific errors
-          if (
-            event.error === "network" ||
-            event.error === "synthesis-failed" ||
-            event.error === "audio-busy" ||
-            event.error === "not-allowed"
-          ) {
-            const errorMsg = 
-              event.error === "network" ? "Online voices require internet connection. Please try an offline voice." :
-              event.error === "not-allowed" ? "Speech not allowed. Please click on the page first." :
-              event.error === "audio-busy" ? "Audio system is busy. Please wait a moment." :
-              "TTS synthesis failed. Trying with smaller chunks or different voice might help.";
+        if (isCapacitor) {
+          try {
+            await TextToSpeech.speak({
+              text: textToSpeak,
+              lang: selectedVoice.lang,
+              rate: playbackRate,
+              pitch: 1.0,
+              volume: 1.0,
+              voice: selectedVoice.index ?? 0,
+            });
             
-            alert(`TTS Error: ${event.error}. ${errorMsg}`);
-          }
-
-          setIsPlaying(false);
-          setIsPaused(false);
-        };
-
-        utteranceRef.current = utterance;
-        window.speechSynthesis.speak(utterance);
-
-        // Detect if voice fails to start (common with online voices or missing gesture)
-        setTimeout(() => {
-          if (!hasStarted && window.speechSynthesis.speaking === false) {
-            console.error("[TTS] Voice failed to start after 3 seconds");
-            // Only alert if we're supposed to be playing
-            if (isPlaying && !hasStarted) {
-               alert(
-                "TTS failed to start. This voice may require internet connection, a user gesture, or may not be available. Please try an offline voice.",
-              );
+            // Continuous play
+            if (endIndex < paragraphsRef.current.length) {
+              speakFromIndex(endIndex);
+            } else {
               setIsPlaying(false);
               setIsPaused(false);
+              setCurrentParagraphIndex(0);
+              if (onCompleteRef.current) onCompleteRef.current();
             }
+          } catch (e) {
+            console.error("Capacitor TTS Speak Error:", e);
+            setIsPlaying(false);
           }
-        }, 3500);
+        } else {
+          // Web Fallback
+          const utterance = new SpeechSynthesisUtterance(textToSpeak);
+          const webVoices = window.speechSynthesis.getVoices();
+          const webVoice = webVoices.find(v => v.name === selectedVoice.name);
+          if (webVoice) utterance.voice = webVoice;
+          
+          utterance.rate = playbackRate;
+          utterance.onend = () => {
+            if (endIndex < paragraphsRef.current.length) {
+              speakFromIndex(endIndex);
+            } else {
+              setIsPlaying(false);
+              setIsPaused(false);
+              setCurrentParagraphIndex(0);
+              if (onCompleteRef.current) onCompleteRef.current();
+            }
+          };
+          utterance.onerror = (e: SpeechSynthesisErrorEvent) => {
+            // Ignore interrupted/canceled errors which happen when skipping paragraphs
+            if (e.error === 'interrupted' || e.error === 'canceled') {
+              return;
+            }
+            console.error("Web TTS Error:", e);
+            setIsPlaying(false);
+          };
+          window.speechSynthesis.speak(utterance);
+        }
       }, waitTime);
     },
-    [selectedVoice, playbackRate],
+    [selectedVoice, playbackRate, isCapacitor],
   );
 
-  const onCompleteRef = useRef<(() => void) | undefined>(undefined);
-
-  // Start speaking from a specific index
   const speak = useCallback(
     (
       paragraphs: string[],
@@ -293,40 +304,46 @@ export const TTSProvider: React.FC<{ children: React.ReactNode }> = ({
     [speakFromIndex],
   );
 
-  // Pause
-  const pause = useCallback(() => {
+  const pause = useCallback(async () => {
     if (isPlaying && !isPaused) {
-      window.speechSynthesis.pause();
+      if (isCapacitor) {
+        await TextToSpeech.stop(); // Stop is effectively pause if we track index
+      } else {
+        window.speechSynthesis.pause();
+      }
       setIsPaused(true);
     }
-  }, [isPlaying, isPaused]);
+  }, [isPlaying, isPaused, isCapacitor]);
 
-  // Resume
   const resume = useCallback(() => {
     if (isPlaying && isPaused) {
-      window.speechSynthesis.resume();
+      if (isCapacitor) {
+        speakFromIndex(currentParagraphIndex);
+      } else {
+        window.speechSynthesis.resume();
+      }
       setIsPaused(false);
     }
-  }, [isPlaying, isPaused]);
+  }, [isPlaying, isPaused, isCapacitor, speakFromIndex, currentParagraphIndex]);
 
-  // Stop
-  const stop = useCallback(() => {
-    window.speechSynthesis.cancel();
+  const stop = useCallback(async () => {
+    if (isCapacitor) {
+      await TextToSpeech.stop();
+    } else {
+      window.speechSynthesis.cancel();
+    }
     setIsPlaying(false);
     setIsPaused(false);
     setCurrentParagraphIndex(0);
     setCurrentChapterIndex(-1);
-    utteranceRef.current = null;
-  }, []);
+  }, [isCapacitor]);
 
-  // Next paragraph - restart from next paragraph
   const nextParagraph = useCallback(() => {
     if (currentParagraphIndex < paragraphsRef.current.length - 1) {
       speakFromIndex(currentParagraphIndex + 1);
     }
   }, [currentParagraphIndex, speakFromIndex]);
 
-  // Previous paragraph - restart from previous paragraph
   const previousParagraph = useCallback(() => {
     if (currentParagraphIndex > 0) {
       speakFromIndex(currentParagraphIndex - 1);

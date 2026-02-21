@@ -1,11 +1,12 @@
 import React from "react";
 import { Volume2 } from "lucide-react";
+import { type UnifiedVoice } from "@/contexts/TTSContext";
 
 interface TTSTabProps {
-  availableVoices: SpeechSynthesisVoice[];
-  selectedVoice: SpeechSynthesisVoice | null;
+  availableVoices: UnifiedVoice[];
+  selectedVoice: UnifiedVoice | null;
   playbackRate: number;
-  onVoiceChange: (voice: SpeechSynthesisVoice) => void;
+  onVoiceChange: (voice: UnifiedVoice) => void;
   onPlaybackRateChange: (rate: number) => void;
   onStartTTS: () => void;
 }
