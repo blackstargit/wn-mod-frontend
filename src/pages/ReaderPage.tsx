@@ -276,7 +276,7 @@ const ReaderPage: React.FC = () => {
 function usePagedProgressTracking(
   viewMode: string,
   currentChapterIndex: number,
-  saveProgress: (p: any) => void,
+  saveProgress: (p: unknown) => void,
   sessionId: string | null,
 ) {
   useEffect(() => {
