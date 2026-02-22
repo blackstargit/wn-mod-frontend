@@ -9,6 +9,7 @@ import React, {
 import { useLocalStorage } from "@/hooks";
 import { TextToSpeech } from "@capacitor-community/text-to-speech";
 import { Capacitor } from "@capacitor/core";
+import { MediaSession } from "@capgo/capacitor-media-session";
 
 // Define a unified voice type to bridge Web and Capacitor
 export interface UnifiedVoice {
@@ -33,6 +34,8 @@ interface TTSContextType {
     startIndex?: number,
     chapterIndex?: number,
     onComplete?: () => void,
+    novelTitle?: string,
+    chapterTitle?: string,
   ) => void;
   pause: () => void;
   resume: () => void;
@@ -60,6 +63,8 @@ export const TTSProvider: React.FC<{ children: React.ReactNode }> = ({
   const [isPaused, setIsPaused] = useState(false);
   const [currentParagraphIndex, setCurrentParagraphIndex] = useState(0);
   const [currentChapterIndex, setCurrentChapterIndex] = useState(-1);
+  const [novelTitle, setNovelTitle] = useState("");
+  const [chapterTitle, setChapterTitle] = useState("");
   const [totalParagraphs, setTotalParagraphs] = useState(0);
   const [availableVoices, setAvailableVoices] = useState<UnifiedVoice[]>([]);
   const [selectedVoice, setSelectedVoice] = useState<UnifiedVoice | null>(null);
@@ -73,43 +78,79 @@ export const TTSProvider: React.FC<{ children: React.ReactNode }> = ({
   );
 
   const paragraphsRef = useRef<string[]>([]);
+  const silentAudioRef = useRef<HTMLAudioElement | null>(null);
+
   const isCapacitor = Capacitor.isNativePlatform();
 
-  // Media Session Control Setup (Standard Web API - works on Android Chrome/Capacitor)
+  // Helper to trigger media session on Android/Web
+  const playSilentAudio = useCallback(() => {
+    // Request notification permission for Android 13+ (required for media controls)
+    if ("Notification" in window && Notification.permission === "default") {
+      Notification.requestPermission();
+    }
+
+    if (!silentAudioRef.current) {
+      // 1 second silent MP3 (more robust than short WAV)
+      const audio = new Audio(
+        "data:audio/mp3;base64,SUQzBAAAAAAAI1RTU0UAAAAPAAADTGF2ZTU4LjI5LjEwMAAAAAAAAAAAAAAA//OEAAAAAAAAAAAAAAAAAAAAAAAASW5mbwAAAA8AAAAEAAABIADAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDA//////////8AAAAAY29uZW50AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA//MUZAAAAAG8AAAANIAAAA0gAAANIAAAAbwAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAD/8xRkSAAAA0gAAANIAAAAbwAAAG8AAANIAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA==",
+      );
+      audio.loop = true;
+      audio.volume = 0.1; // Slightly more volume (still silent MP3 but OS might notice it more)
+      silentAudioRef.current = audio;
+    }
+    silentAudioRef.current
+      .play()
+      .catch((e) => console.error("Silent audio play failed:", e));
+  }, []);
+
+  const stopSilentAudio = useCallback(() => {
+    if (silentAudioRef.current) {
+      silentAudioRef.current.pause();
+      silentAudioRef.current.currentTime = 0;
+    }
+  }, []);
+
+  // Update Media State & Metadata
   useEffect(() => {
     if (!("mediaSession" in navigator)) return;
 
-    const setupMediaControls = () => {
+    // Update Playback State
+    navigator.mediaSession.playbackState = isPlaying
+      ? isPaused
+        ? "paused"
+        : "playing"
+      : "none";
+
+    // Update Metadata if playing
+    if (isPlaying) {
       navigator.mediaSession.metadata = new MediaMetadata({
-        title: "Novel Reader",
+        title:
+          currentChapterIndex >= 0
+            ? `Chapter ${currentChapterIndex + 1}`
+            : "Novel Reader",
         artist: "AI Narrator",
         album: "Novel App",
-        artwork: [],
+        artwork: [
+          {
+            src: "https://cdn-icons-png.flaticon.com/512/3502/3502601.png",
+            sizes: "512x512",
+            type: "image/png",
+          },
+        ],
       });
-
-      navigator.mediaSession.setActionHandler("play", () => resume());
-      navigator.mediaSession.setActionHandler("pause", () => pause());
-      navigator.mediaSession.setActionHandler("stop", () => stop());
-      navigator.mediaSession.setActionHandler("nexttrack", () => nextParagraph());
-      navigator.mediaSession.setActionHandler("previoustrack", () => previousParagraph());
-    };
-
-    setupMediaControls();
-  }, []); // Run once
-
-  // Update Media State
-  useEffect(() => {
-    if (!("mediaSession" in navigator)) return;
-    navigator.mediaSession.playbackState = isPlaying ? (isPaused ? "paused" : "playing") : "none";
-  }, [isPlaying, isPaused]);
+    }
+  }, [isPlaying, isPaused, currentChapterIndex]);
 
   // Mapping Web voices to UnifiedVoice
-  const mapWebVoice = useCallback((v: SpeechSynthesisVoice): UnifiedVoice => ({
+  const mapWebVoice = useCallback(
+    (v: SpeechSynthesisVoice): UnifiedVoice => ({
       name: v.name,
       lang: v.lang,
       localService: v.localService,
-    voiceURI: v.voiceURI
-  }), []);
+      voiceURI: v.voiceURI,
+    }),
+    [],
+  );
 
   // Load available voices
   useEffect(() => {
@@ -218,6 +259,9 @@ export const TTSProvider: React.FC<{ children: React.ReactNode }> = ({
       setIsPlaying(true);
       setIsPaused(false);
 
+      // Trigger media session notification on Android
+      playSilentAudio();
+
       if (isCapacitor) {
         await TextToSpeech.stop();
       } else {
@@ -319,7 +363,7 @@ export const TTSProvider: React.FC<{ children: React.ReactNode }> = ({
         }
       }, waitTime);
     },
-    [selectedVoice, playbackRate, isCapacitor],
+    [selectedVoice, playbackRate, isCapacitor, playSilentAudio],
   );
 
   const speak = useCallback(
@@ -328,10 +372,14 @@ export const TTSProvider: React.FC<{ children: React.ReactNode }> = ({
       startIndex: number = 0,
       chapterIndex: number = -1,
       onComplete?: () => void,
+      nTitle?: string,
+      cTitle?: string,
     ) => {
       paragraphsRef.current = paragraphs;
       setTotalParagraphs(paragraphs.length);
       setCurrentChapterIndex(chapterIndex);
+      if (nTitle) setNovelTitle(nTitle);
+      if (cTitle) setChapterTitle(cTitle);
       onCompleteRef.current = onComplete;
       speakFromIndex(startIndex);
     },
@@ -345,9 +393,10 @@ export const TTSProvider: React.FC<{ children: React.ReactNode }> = ({
       } else {
         window.speechSynthesis.pause();
       }
+      stopSilentAudio();
       setIsPaused(true);
     }
-  }, [isPlaying, isPaused, isCapacitor]);
+  }, [isPlaying, isPaused, isCapacitor, stopSilentAudio]);
 
   const resume = useCallback(() => {
     if (isPlaying && isPaused) {
@@ -356,9 +405,17 @@ export const TTSProvider: React.FC<{ children: React.ReactNode }> = ({
       } else {
         window.speechSynthesis.resume();
       }
+      playSilentAudio();
       setIsPaused(false);
     }
-  }, [isPlaying, isPaused, isCapacitor, speakFromIndex, currentParagraphIndex]);
+  }, [
+    isPlaying,
+    isPaused,
+    isCapacitor,
+    speakFromIndex,
+    currentParagraphIndex,
+    playSilentAudio,
+  ]);
 
   const stop = useCallback(async () => {
     if (isCapacitor) {
@@ -366,11 +423,12 @@ export const TTSProvider: React.FC<{ children: React.ReactNode }> = ({
     } else {
       window.speechSynthesis.cancel();
     }
+    stopSilentAudio();
     setIsPlaying(false);
     setIsPaused(false);
     setCurrentParagraphIndex(0);
     setCurrentChapterIndex(-1);
-  }, [isCapacitor]);
+  }, [isCapacitor, stopSilentAudio]);
 
   const nextParagraph = useCallback(() => {
     if (currentParagraphIndex < paragraphsRef.current.length - 1) {
@@ -383,6 +441,133 @@ export const TTSProvider: React.FC<{ children: React.ReactNode }> = ({
       speakFromIndex(currentParagraphIndex - 1);
     }
   }, [currentParagraphIndex, speakFromIndex]);
+
+  // Handlers refs to avoid stale closures in MediaSession handlers
+  const handlersRef = useRef({
+    resume,
+    pause,
+    stop,
+    nextParagraph,
+    previousParagraph,
+  });
+
+  useEffect(() => {
+    handlersRef.current = {
+      resume,
+      pause,
+      stop,
+      nextParagraph,
+      previousParagraph,
+    };
+  }, [resume, pause, stop, nextParagraph, previousParagraph]);
+
+  // Combined Media Session Control Setup & Metadata Update
+  useEffect(() => {
+    // 1. Web Standard (Works for browsers and polyfilled by plugin)
+    if ("mediaSession" in navigator) {
+      navigator.mediaSession.playbackState = isPlaying
+        ? isPaused
+          ? "paused"
+          : "playing"
+        : "none";
+
+      navigator.mediaSession.setActionHandler("play", () =>
+        handlersRef.current.resume(),
+      );
+      navigator.mediaSession.setActionHandler("pause", () =>
+        handlersRef.current.pause(),
+      );
+      navigator.mediaSession.setActionHandler("stop", () =>
+        handlersRef.current.stop(),
+      );
+      navigator.mediaSession.setActionHandler("nexttrack", () =>
+        handlersRef.current.nextParagraph(),
+      );
+      navigator.mediaSession.setActionHandler("previoustrack", () =>
+        handlersRef.current.previousParagraph(),
+      );
+
+      if (isPlaying) {
+        navigator.mediaSession.metadata = new MediaMetadata({
+          title:
+            chapterTitle ||
+            (currentChapterIndex >= 0
+              ? `Chapter ${currentChapterIndex + 1}`
+              : "Novel Reader"),
+          artist: novelTitle || "AI Narrator",
+          album: "Novel App",
+          artwork: [
+            {
+              src: "https://cdn-icons-png.flaticon.com/512/3502/3502601.png",
+              sizes: "512x512",
+              type: "image/png",
+            },
+          ],
+        });
+      }
+    }
+
+    // 2. Native Plugin Force (Crucial for Android 14/15/16 background reliability)
+    if (isCapacitor) {
+      const syncNativeMedia = async () => {
+        try {
+          // Set Metadata
+          await MediaSession.setMetadata({
+            title:
+              chapterTitle ||
+              (currentChapterIndex >= 0
+                ? `Chapter ${currentChapterIndex + 1}`
+                : "Novel Reader"),
+            artist: novelTitle || "AI Narrator",
+            album: "Novel App",
+            artwork: [
+              {
+                src: "https://cdn-icons-png.flaticon.com/512/3502/3502601.png",
+                sizes: "512x512",
+                type: "image/png",
+              },
+            ],
+          });
+
+          // Set Playback State
+          await MediaSession.setPlaybackState({
+            playbackState: isPlaying
+              ? isPaused
+                ? "paused"
+                : "playing"
+              : "none",
+          });
+
+          // Set Handlers
+          await MediaSession.setActionHandler({ action: "play" }, () =>
+            handlersRef.current.resume(),
+          );
+          await MediaSession.setActionHandler({ action: "pause" }, () =>
+            handlersRef.current.pause(),
+          );
+          await MediaSession.setActionHandler({ action: "stop" }, () =>
+            handlersRef.current.stop(),
+          );
+          await MediaSession.setActionHandler({ action: "nexttrack" }, () =>
+            handlersRef.current.nextParagraph(),
+          );
+          await MediaSession.setActionHandler({ action: "previoustrack" }, () =>
+            handlersRef.current.previousParagraph(),
+          );
+        } catch (e) {
+          console.error("Native MediaSession Sync Error:", e);
+        }
+      };
+      syncNativeMedia();
+    }
+  }, [
+    isPlaying,
+    isPaused,
+    currentChapterIndex,
+    isCapacitor,
+    novelTitle,
+    chapterTitle,
+  ]);
 
   const value: TTSContextType = {
     isPlaying,

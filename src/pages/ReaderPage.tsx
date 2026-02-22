@@ -63,6 +63,7 @@ const ReaderPage: React.FC = () => {
       currentChapterIndex,
       setCurrentChapterIndex,
       chapters,
+      novelTitle: novel?.title,
     });
 
   // Wrappers to reset paragraph index on manual navigation

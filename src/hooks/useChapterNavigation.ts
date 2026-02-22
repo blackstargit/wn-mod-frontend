@@ -5,6 +5,7 @@ interface UseChapterNavigationProps {
   currentChapterIndex: number;
   setCurrentChapterIndex: (index: number) => void;
   chapters: Chapter[];
+  novelTitle?: string;
 }
 
 /**
@@ -14,6 +15,7 @@ export function useChapterNavigation({
   currentChapterIndex,
   setCurrentChapterIndex,
   chapters = [],
+  novelTitle = "Novel Reader",
 }: UseChapterNavigationProps) {
   const tts = useTTS();
 
@@ -44,8 +46,15 @@ export function useChapterNavigation({
         .map((p) => p.trim())
         .filter((p) => p.length > 0);
 
-      // Start TTS from the specified index
-      tts.speak(paragraphs, startParagraphIndex, startChapterIndex, onComplete);
+      // Start TTS with metadata
+      tts.speak(
+        paragraphs,
+        startParagraphIndex,
+        startChapterIndex,
+        onComplete,
+        novelTitle,
+        chapter.title,
+      );
     }
   };
 
